@@ -1,0 +1,17 @@
+#!/bin/sh
+#
+# This scripts gets a specific version of deptools if not present.
+# Then is executes it with the given arguments.
+# The actual dependency on the deptools is owned by this script.
+# The other dependencies are handled by the deptools DEPENDENCIES files. 
+#
+set -e
+dir=`dirname $0`
+
+# Extract the deptools at the required revision
+[ -d deptools -a -z "$FORCE_DEPTOOLS" ] || \
+  cp -a /home/guillon/git/deptools/deptools $dir
+# Exec deptools
+$dir/deptools/deptool.py ${1+"$@"}
+
+

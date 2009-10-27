@@ -107,7 +107,7 @@ def usage(config):
 
 
 def print_error(msg):
-  print "error: " +  msg
+  print os.path.basename(sys.argv[0]) + ": error: " + msg
 
 def error(msg):
   print_error(msg)
@@ -152,7 +152,7 @@ def main():
     if not config.check():
         sys.exit(2)
     if len(args) == 0:
-        error("missing command")
+        error("missing command, try --help for usage")
     dependency = Dependency(config)
     dependency.exec_cmd(args[0], args[1:])
 #    dependency.dump()

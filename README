@@ -1,0 +1,34 @@
+
+
+The deptools component provides a simple source dependency tracking tool for
+building source project from several distinct components.
+
+The list of such dependencies is stored in a simple DEPENDENCIES file at the
+root of the parent component.
+
+The deptools script itself stored at the root of the component is in charge of
+interpreting the list of dependencies.
+
+The components may be hosted in different repositories and repository formats.  
+
+For instance deptools may help solving source dependencies issues such as:
+
+    * describing that the build of project A depends upon sources of project B
+at revision X in branch B and upon file F in unique path P,
+    * providing a simple command for extracting dependencies of project A, i.e.
+extracting repository B under directory b and file F under filename f,
+    * enforcing that the unique revision/label R of source tree A is sufficient
+to uniquely identify A and all its source dependencies at the right revisions,
+    * easily identifying, extracting, commiting, updating all components at
+once,
+    * referencing uniformly svn, git, mercurial, clearcase repositories, or
+ftp, ssh, http URIs. 
+
+The deptools project does not solve the orthogonal problems of:
+
+    * actually building source components and dependencies,
+    * installing cache of build results,
+    * specifying runtime dependencies between components.
+
+This tool is an import of an older tool called dependencies that was used for
+tracking dependencies between different source code repositories.

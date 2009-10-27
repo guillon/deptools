@@ -32,3 +32,6 @@ The deptools project does not solve the orthogonal problems of:
 
 This tool is an import of an older tool called dependencies that was used for
 tracking dependencies between different source code repositories.
+
+This project is hosted at https://www.assembla.com/wiki/show/deptools-dev. One
+will find there all project activities and resources. 

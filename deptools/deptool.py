@@ -28,7 +28,7 @@
 
 import os, sys, getopt
 
-# non standard package
+# non standard package, use local version
 import yaml
 
 # SourceManagers

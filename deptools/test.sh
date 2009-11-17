@@ -26,14 +26,21 @@
 # OTHER DEALINGS IN THE SOFTWARE.
 #
 
+set -e
 dir=`dirname $0`
-res=0
-for i in $dir/plugins/test_*.sh
+res=1
+
+exit_func() {
+    echo
+    [ $res = 0 ] && echo "PASSED: all tests passed"
+    [ $res = 0 ] || echo "FAILED: some test failed"
+}
+
+trap "exit_func" 0 1 15
+
+for i in $dir/test_*.sh $dir/plugins/test_*.sh
 do
     $i
-    [ $? = 0 ] || res=1
 done
-echo
-[ $res = 0 ] && echo "PASSED: all tests passed"
-[ $res = 0 ] || echo "FAILED: some tests failed"
-exit $res
+res=0
+

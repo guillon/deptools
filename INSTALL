@@ -1,0 +1,16 @@
+
+Deptools is a python tool with some additional shell scripts for testing.
+
+Currently there is no installation procedure as this tool is supposed to be
+embedded as part of a component that uses it.
+
+Thus one just have to make, check and copy the dependencies script into its own component:
+
+1. make it and check it with:
+make all
+make check
+2. copy the shell script dependencies in your source tree
+cp dependencies ~/mysourcetree
+3. edit the default dependency file in your source tree (see for instance examples/DEPENDENCIES)
+vi ~/mysourcetree/DEPENDENCIES
+4. that's it, you can update your DEPENDENCIES files and commit your source tree

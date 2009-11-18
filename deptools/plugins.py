@@ -85,7 +85,7 @@ class PluginLoader:
 class SourceManager:
     """ SourceManager plugins must derive from this class.
     Methods that must be implemented by SourceManager plugins are:
-    clone, update, commit, rebase, deliver.
+    extract, update, commit, rebase, deliver, dump, list.
     Attributes are:
     name, description.
     """

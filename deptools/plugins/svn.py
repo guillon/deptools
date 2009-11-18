@@ -189,8 +189,8 @@ class SvnManagerCmdLine:
             self._restore_session()
             if cmd_name == "execute":
                 self._manager.execute(args)
-            elif cmd_name == "clone":
-                self._manager.clone(args)
+            elif cmd_name == "extract":
+                self._manager.extract(args)
             elif cmd_name == "update":
                 self._manager.update(args)
             elif cmd_name == "commit":

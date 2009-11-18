@@ -95,8 +95,8 @@ class Dependency:
         for component in self.components:
             if command == "execute":
                 component.execute(args)
-            elif command == "clone":
-                component.checkout(args)
+            elif command == "extract":
+                component.extract(args)
             elif command == "update":
                 component.update(args)
             elif command == "commit":
@@ -144,7 +144,7 @@ def usage(config):
   print
   print "where command is one of:"
   print " list: list all dependencies"
-  print " checkout: extract all dependencies"
+  print " extract: extract all dependencies"
   print " update: update all dependencies"
   print " commit: commit all dependencies"
   print " freeze: freeze all dependencies revisions"

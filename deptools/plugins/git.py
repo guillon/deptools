@@ -77,7 +77,7 @@ class GitManager(SourceManager):
             print "Execute " + self.basename
         self._subcmd(args)
 
-    def clone(self, args = []):
+    def extract(self, args = []):
         if self.config.verbose:
             print "Clone " + self.basename
         try:

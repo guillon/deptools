@@ -9,8 +9,8 @@ set -e
 dir=`dirname $0`
 
 # Extract the deptools at the required revision
-[ -d deptools -a -z "$FORCE_DEPTOOLS" ] || \
-  hg clone http://hg.assembla.com/deptools-dev $dir/deptools-dev && ln -fs deptools-dev $dir/deptools
+[ -e $dir/deptools/deptool.py ] || \
+  (hg clone http://hg.assembla.com/deptools-dev $dir/deptools-dev && ln -fs deptools-dev/deptools $dir/deptools)
 # Exec deptools
 $dir/deptools/deptool.py ${1+"$@"}
 

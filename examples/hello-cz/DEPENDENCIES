@@ -1,0 +1,18 @@
+configurations:
+  default:
+    - hello
+    - yap
+
+repositories:
+  hello:
+    format: git
+    label: master
+    repos: http://repo.or.cz/r/HelloWorld.git
+    revision: e1bd9c1a32304a1509eebfb0991c2eae490499e2
+    alias: hello  
+  yap:
+    format: git
+    label: master
+    repos: http://repo.or.cz/r/yap.git
+    revision: 336cd1e1a6236ecbad44268bb02c8ce3221992f1
+    alias:

@@ -58,6 +58,10 @@ class GitManager(SourceManager):
             self.basename = os.path.basename(self.component['repos'])
             if self.basename.endswith(".git"):
                 self.basename = self.basename.rsplit('.', 1)[0]
+        if component['revision'] != None and component['revision'] != "HEAD":
+            self.id = component['revision']
+        else:
+            self.id = component['label']
         self.cwd = os.getcwd()
 
     def _cmd(self, args):
@@ -82,9 +86,10 @@ class GitManager(SourceManager):
             print "Clone " + self.basename
         try:
             if os.path.exists(self.basename):
-                raise Exception, "path exists: " + self.basename
-            self._cmd([self.config.git, 'clone', self.component['repos'], self.basename])
-            self._subcmd([self.config.git, 'checkout', self.component['label']])
+                print "Cannot extract component " +  self.name + ", path exists: " + self.basename + ". Skipped."
+                return
+            self._cmd([self.config.git, 'clone', '-n', self.component['repos'], self.basename])
+            self._subcmd([self.config.git, 'checkout', self.id])
         except Exception, e:
             raise Exception, "cannot clone component: " + str(e)
         

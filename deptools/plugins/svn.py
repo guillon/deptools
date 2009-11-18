@@ -78,12 +78,13 @@ class SvnManager(SourceManager):
             print "Execute " + self.basename
         self._subcmd(args)
 
-    def clone(self, args = []):
+    def extract(self, args = []):
         if self.config.verbose:
             print "Clone " + self.basename
         try:
             if os.path.exists(self.basename):
-                raise Exception, "path exists: " + self.basename
+                print "Cannot extract component " +  self.name + ", path exists: " + self.basename + ". Skipped."
+                return
             self._cmd([self.config.svn, 'checkout', self.component['repos'] + "/" + self.branch, self.basename])
         except Exception, e:
             raise Exception, "cannot clone component: " + str(e)

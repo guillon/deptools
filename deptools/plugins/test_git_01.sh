@@ -44,7 +44,7 @@ cd $tmpdir
 cwd=$tmpdir
 
 # Be sure that git is present
-git --version
+git --version || error "git: command not found. Git must be installed for the git plugin to work"
 
 # Be sure we are not in a git repository while performing this test
 git log -n1 >/dev/null 2>&1 && \

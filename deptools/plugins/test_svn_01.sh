@@ -44,6 +44,7 @@ cd $tmpdir
 cwd=$tmpdir
 
 # Be sure that svn is present
+svn --version >/dev/null || error "svn: command not found. Subversion must be installed for the svn plugin to work"
 svn --version | head -n 1
 
 # Be sure we are not in a svn repository while performing this test

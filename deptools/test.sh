@@ -40,7 +40,8 @@ trap "exit_func" 0 1 15
 
 for i in $dir/test_*.sh $dir/plugins/test_*.sh
 do
-    $i
+    echo "Running $i"
+    $i || echo "*** FAILED $i" >&2
 done
 res=0
 

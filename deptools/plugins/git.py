@@ -151,11 +151,21 @@ class GitManager(SourceManager):
             raise Exception, "cannot get actual revision: " + str(e)
         return revision
 
+    def get_head_revision(self, revision):
+        return "HEAD"
+
     def dump_actual(self, args = []):
         if self.config.verbose:
             print "Dump_actual " + self.basename
         actual = self.component
         actual['revision'] = self.get_actual_revision(actual['revision'])
+        print yaml.dump(actual)
+
+    def dump_head(self, args = []):
+        if self.config.verbose:
+            print "Dump_head " + self.basename
+        actual = self.component
+        actual['revision'] = self.get_head_revision(actual['revision'])
         print yaml.dump(actual)
 
     def list(self, args = []):

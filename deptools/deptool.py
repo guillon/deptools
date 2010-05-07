@@ -83,6 +83,20 @@ class Dependency:
         deps = DependencyFile(self.deps)
         deps.dump()
 
+    def dump_actual(self):
+        for component in self.components:
+            repo = component.component
+            repo['revision'] = component.get_actual_revision(repo['revision'])
+        deps = DependencyFile(self.deps)
+        deps.dump()
+
+    def dump_head(self):
+        for component in self.components:
+            repo = component.component
+            repo['revision'] = component.get_head_revision(repo['revision'])
+        deps = DependencyFile(self.deps)
+        deps.dump()
+
     def prepare(self):
         list = self.deps["configurations"][self.configuration]
         self.components = []
@@ -109,6 +123,8 @@ class Dependency:
                 component.dump(args)
             elif command == "dump_actual":
                 component.dump_actual(args)
+            elif command == "dump_head":
+                component.dump_head(args)
             elif command == "list":
                 component.list(args)
             else:
@@ -117,6 +133,10 @@ class Dependency:
     def exec_cmd(self, command, args=[]):
         if command == "dump":
             self.dump()
+        elif command == "dump_actual":
+            self.dump_actual()
+        elif command == "dump_head":
+            self.dump_head()
         else:
             self.foreach(command, args)
 

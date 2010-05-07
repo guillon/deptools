@@ -82,6 +82,7 @@ $TEST ${tmpbase}.1.ser new ${tmpbase}.1.dep
 $TEST ${tmpbase}.1.ser extract 
 $TEST ${tmpbase}.1.ser dump
 $TEST ${tmpbase}.1.ser dump_actual
+$TEST ${tmpbase}.1.ser dump_head
 $TEST ${tmpbase}.1.ser update
 $TEST ${tmpbase}.1.ser execute touch bfile
 $TEST ${tmpbase}.1.ser execute git add bfile

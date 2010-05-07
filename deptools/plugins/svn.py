@@ -128,11 +128,21 @@ class SvnManager(SourceManager):
             raise Exception, "cannot get actual revision: " + str(e)
         return "TODO"
 
+    def get_head_revision(self, revision):
+        return "HEAD"
+
     def dump_actual(self, args = []):
         if self.config.verbose:
             print "Dump_actual " + self.basename
         actual = self.component
         actual['revision'] = self.get_actual_revision(actual['revision'])
+        print yaml.dump(actual)
+
+    def dump_head(self, args = []):
+        if self.config.verbose:
+            print "Dump_head " + self.basename
+        actual = self.component
+        actual['revision'] = self.get_head_revision(actual['revision'])
         print yaml.dump(actual)
 
     def list(self, args = []):
@@ -203,6 +213,8 @@ class SvnManagerCmdLine:
                 self._manager.dump(args)
             elif cmd_name == "dump_actual":
                 self._manager.dump_actual(args)
+            elif cmd_name == "dump_head":
+                self._manager.dump_head(args)
             elif cmd_name == "list":
                 self._manager.list(args)
             else:

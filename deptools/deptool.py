@@ -48,7 +48,7 @@ class Config:
     def parse_options(self, opts, args):
         for o, a in opts:
             if o in ("-f", "--file"):
-                self.dep_path = a
+                self.dep_file = a
         #if len(args) > 0:
         #    self.prg_path = args
 
@@ -74,7 +74,10 @@ class Dependency:
         self.prepare()
 
     def load(self):
-        stream = file(self.config.dep_file)
+        if self.config.dep_file == "-":
+            stream = sys.stdin
+        else:
+            stream = file(self.config.dep_file)
         deps =  DependencyFile()
         deps.load(stream)
         self.deps = deps.content
@@ -169,6 +172,9 @@ def usage(config):
   print " commit: commit all dependencies"
   print " freeze: freeze all dependencies revisions"
   print " exec: execute command for all dependencies"
+  print " dump: dumps to stdout the dependencies"
+  print " dump_actual: dumps to stdout the dependencies with actual revisions"
+  print " dump_head: dumps to stdout the dependencies at head revisions"
   print ""
   print "where options are:"
   print " -f|--file <dep_file> : dependency file. Default [" + config.dep_file + "]"

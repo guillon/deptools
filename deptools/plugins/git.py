@@ -97,14 +97,12 @@ class GitManager(SourceManager):
         if self.config.verbose:
             print "Clone " + self.basename
         try:
-            if os.path.exists(self.basename):
-                print "Cannot extract component " +  self.name + ", path exists: " + self.basename + ". Skipped."
-                return
-            self._cmd([self.config.git, 'clone', '-n', self.component['repos'], self.basename])
+            if not os.path.exists(self.basename):
+                self._cmd([self.config.git, 'clone', '-n', self.component['repos'], self.basename])
             self._subcmd([self.config.git, 'checkout', self.id])
         except Exception, e:
             raise Exception, "cannot clone component: " + str(e)
-        
+
     def update(self, args = []):
         if self.config.verbose:
             print "Update " + self.basename

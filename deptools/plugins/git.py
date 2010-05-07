@@ -25,8 +25,7 @@
 # OTHER DEALINGS IN THE SOFTWARE.
 #
 
-from subprocess import call
-from subprocess import check_call
+from subprocess import call, check_call, Popen, PIPE
 from plugins import SourceManager
 import os, sys
 import yaml
@@ -68,6 +67,11 @@ class GitManager(SourceManager):
         if self.config.verbose:
             print " ".join(args)
         check_call(args)
+
+    def _cmd_output(self, args):
+        if self.config.verbose:
+            print " ".join(args)
+        return Popen(args, stdout=PIPE).communicate()[0]
     
     def _subcmd(self, args):
         if not os.path.exists(self.basename):
@@ -75,6 +79,14 @@ class GitManager(SourceManager):
         os.chdir(self.basename)
         self._cmd(args)
         os.chdir(self.cwd)
+
+    def _subcmd_output(self, args):
+        if not os.path.exists(self.basename):
+            raise Exception, "path does not exist: " + self.basename
+        os.chdir(self.basename)
+        output = self._cmd_output(args)
+        os.chdir(self.cwd)
+        return output
         
     def execute(self, args):
         if self.config.verbose:
@@ -134,10 +146,10 @@ class GitManager(SourceManager):
 
     def get_actual_revision(self, revision):
         try:
-            self._subcmd([self.config.git, 'log', '--pretty=oneline', '-n1', revision])
+            revision = self._subcmd_output([self.config.git, 'rev-list', '--max-count=1', revision]).strip()
         except Exception, e:
             raise Exception, "cannot get actual revision: " + str(e)
-        return "TODO"
+        return revision
 
     def dump_actual(self, args = []):
         if self.config.verbose:

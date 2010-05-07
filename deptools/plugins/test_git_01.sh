@@ -63,7 +63,6 @@ echo "a file" >afile
 git add afile
 git commit -m 'Added afile'
 git remote add origin $cwd/${tmpbase}.1.git
-mkdir -p $cwd/${tmpbase}.1.git
 git clone --bare . $cwd/${tmpbase}.1.git
 cd ..
 

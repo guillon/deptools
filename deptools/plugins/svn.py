@@ -123,7 +123,7 @@ class SvnManager(SourceManager):
     def get_actual_revision(self, revision):
         try:
             self._subcmd([self.config.svn, 'update'])
-            self._subcmd([self.config.svn, 'info', revision])
+            self._subcmd([self.config.svn, 'info', '-r', revision])
         except Exception, e:
             raise Exception, "cannot get actual revision: " + str(e)
         return "TODO"

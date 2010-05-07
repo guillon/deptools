@@ -28,6 +28,8 @@
 
 set -e
 
+[ "$DEBUG" = "" ] || set -x
+
 error() {
     echo "error: $*"
     exit 1
@@ -53,21 +55,16 @@ git log -n1 >/dev/null 2>&1 && \
 # Clean from previous runs
 rm -rf ${tmpbase}*
 
-# Prepare bare git
-mkdir -p ${tmpbase}.1.git
-cd ${tmpbase}.1.git
-git init  # Note: --bare does not seem to work on git 1.5.4.3.
-cd ..
-
-# Prepare tree from work dir and push to bare
+# Prepare tree from work dir and push to a new git reference
 mkdir -p ${tmpbase}.1.work
 cd ${tmpbase}.1.work
 git init
-git remote add origin $cwd/${tmpbase}.1.git
 echo "a file" >afile
 git add afile
 git commit -m 'Added afile'
-git push origin master
+git remote add origin $cwd/${tmpbase}.1.git
+mkdir -p $cwd/${tmpbase}.1.git
+git clone --bare . $cwd/${tmpbase}.1.git
 cd ..
 
 # Prepare dependency spec
@@ -77,7 +74,7 @@ component:
   alias: ${tmpbase}.dep
   format: git
   label: master
-  repos: $cwd/${tmpbase}.1
+  repos: $cwd/${tmpbase}.1.git
   revision: HEAD
 EOF
 

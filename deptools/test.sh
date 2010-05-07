@@ -28,12 +28,20 @@
 
 set -e
 dir=`dirname $0`
-res=1
+
+[ "$DEBUG" = "" ] || set -x
+
+failed=0
 
 exit_func() {
     echo
-    [ $res = 0 ] && echo "PASSED: all tests passed"
-    [ $res = 0 ] || echo "FAILED: some test failed"
+    [ $failed = 1 ] || echo "PASSED: all tests passed"
+    [ $failed = 0 ] || echo "FAILED: some tests failed"
+}
+
+failed() {
+  echo "*** FAILED $*" >&2
+  failed=1
 }
 
 trap "exit_func" 0 1 15
@@ -41,7 +49,6 @@ trap "exit_func" 0 1 15
 for i in $dir/test_*.sh $dir/plugins/test_*.sh
 do
     echo "Running $i"
-    $i || echo "*** FAILED $i" >&2
+    $i || failed $i
 done
-res=0
 

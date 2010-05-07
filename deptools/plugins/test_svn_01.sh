@@ -28,6 +28,8 @@
 
 set -e
 
+[ "$DEBUG" = "" ] || set -x
+
 error() {
     echo "error: $*"
     exit 1

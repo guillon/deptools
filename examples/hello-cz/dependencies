@@ -9,9 +9,13 @@ set -e
 dir=`dirname $0`
 
 # Extract the deptools at the required revision
-[ -e $dir/deptools/deptool.py ] || \
-  (hg clone http://hg.assembla.com/deptools-dev $dir/deptools-dev && ln -fs deptools-dev/deptools $dir/deptools)
+if [ ! -e $dir/deptools/deptools/deptool.py ]; then
+  git clone -n http://github.com/guillon/deptools.git
+  cd deptools
+  git checkout --quiet 634ea8b14b705c1f3ac1
+  cd ..
+fi
 # Exec deptools
-$dir/deptools/deptool.py ${1+"$@"}
+$dir/deptools/deptools/deptool.py ${1+"$@"}
 
 

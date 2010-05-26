@@ -100,7 +100,8 @@ class GitManager(SourceManager):
             if not os.path.exists(self.basename):
                 self._cmd([self.config.git, 'clone', '-n', self.component['repos'], self.basename])
             else:
-                self._subcmd([self.config.git, 'remote', 'set-url', 'origin', self.component['repos']])
+                self._subcmd([self.config.git, 'remote', 'rm', 'origin'])
+                self._subcmd([self.config.git, 'remote', 'add', 'origin', self.component['repos']])
                 self._subcmd([self.config.git, 'fetch', 'origin'])
             self._subcmd([self.config.git, 'checkout', self.id])
         except Exception, e:

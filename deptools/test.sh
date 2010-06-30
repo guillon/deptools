@@ -40,8 +40,12 @@ exit_func() {
 }
 
 failed() {
-  echo "*** FAILED $*" >&2
+  echo "TEST-UNEXPECTED-FAIL | $*" >&2
   failed=1
+}
+
+success() {
+  echo "TEST-PASS | $*" >&2
 }
 
 trap "exit_func" 0 1 15
@@ -49,6 +53,6 @@ trap "exit_func" 0 1 15
 for i in $dir/test_*.sh $dir/plugins/test_*.sh
 do
     echo "Running $i"
-    $i || failed $i
+    ($i && success $i) || failed $i
 done
 

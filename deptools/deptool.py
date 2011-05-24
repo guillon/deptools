@@ -114,6 +114,8 @@ class Dependency:
                 component.execute(args)
             elif command == "extract":
                 component.extract(args)
+            elif command == "extract_or_updt":
+                component.extract_or_updt(args)
             elif command == "update":
                 component.update(args)
             elif command == "commit":
@@ -169,6 +171,7 @@ def usage(config):
   print " list: list all dependencies"
   print " extract: extract all dependencies"
   print " update: update all dependencies"
+  print " extract_or_updt: extract all dependencies or update if already existing"
   print " commit: commit all dependencies"
   print " freeze: freeze all dependencies revisions"
   print " exec: execute command for all dependencies"

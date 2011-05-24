@@ -89,6 +89,17 @@ class SvnManager(SourceManager):
         except Exception, e:
             raise Exception, "cannot clone component: " + str(e)
         
+    def extract_or_updt(self, args = []):
+        if self.config.verbose:
+            print "Clone " + self.basename
+        try:
+            if os.path.exists(self.basename):
+                self._subcmd([self.config.svn, 'update'])
+                return
+            self._cmd([self.config.svn, 'checkout', self.component['repos'] + "/" + self.branch, self.basename])
+        except Exception, e:
+            raise Exception, "cannot clone component: " + str(e)
+        
     def update(self, args = []):
         if self.config.verbose:
             print "Update " + self.basename
@@ -201,6 +212,8 @@ class SvnManagerCmdLine:
                 self._manager.execute(args)
             elif cmd_name == "extract":
                 self._manager.extract(args)
+            elif cmd_name == "extract_or_updt":
+                self._manager.extract_or_updt(args)
             elif cmd_name == "update":
                 self._manager.update(args)
             elif cmd_name == "commit":

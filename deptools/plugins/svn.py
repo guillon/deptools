@@ -163,7 +163,7 @@ class SvnManager(SourceManager):
             alias_str = "," + self.component['alias']
         else:
             alias_str = ""
-        print self.name + "," + self.component['label'] + "@" + self.component['revision'] +  "," + self.component['repos'] + alias_str
+        print self.name + "," + self.component['label'] + "@" + str(self.component['revision']) +  "," + self.component['repos'] + alias_str
 
 
 class SvnManagerCmdLine:

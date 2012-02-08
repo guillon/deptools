@@ -85,7 +85,7 @@ class SvnManager(SourceManager):
             if os.path.exists(self.basename):
                 print "Cannot extract component " +  self.name + ", path exists: " + self.basename + ". Skipped."
                 return
-            self._cmd([self.config.svn, 'checkout', self.component['repos'] + "/" + self.branch, self.basename])
+            self._cmd([self.config.svn, 'checkout', self.component['repos'] + "/" + self.branch + "@" + str(self.component['revision']), self.basename])
         except Exception, e:
             raise Exception, "cannot clone component: " + str(e)
         
@@ -94,9 +94,9 @@ class SvnManager(SourceManager):
             print "Clone " + self.basename
         try:
             if os.path.exists(self.basename):
-                self._subcmd([self.config.svn, 'update'])
+                self._subcmd([self.config.svn, 'update', '-r', str(self.component['revision'])])
                 return
-            self._cmd([self.config.svn, 'checkout', self.component['repos'] + "/" + self.branch, self.basename])
+            self._cmd([self.config.svn, 'checkout', self.component['repos'] + "/" + self.branch + "@" + str(self.component['revision']), self.basename])
         except Exception, e:
             raise Exception, "cannot clone component: " + str(e)
         
@@ -104,7 +104,7 @@ class SvnManager(SourceManager):
         if self.config.verbose:
             print "Update " + self.basename
         try:
-            self._subcmd([self.config.svn, 'update'])
+            self._subcmd([self.config.svn, 'update', '-r', str(self.component['revision'])])
         except Exception, e:
             raise Exception, "cannot update component: " + str(e)
 
@@ -134,7 +134,7 @@ class SvnManager(SourceManager):
     def get_actual_revision(self, revision):
         try:
             self._subcmd([self.config.svn, 'update'])
-            self._subcmd([self.config.svn, 'info', '-r', revision])
+            self._subcmd([self.config.svn, 'info', '-r', str(revision)])
         except Exception, e:
             raise Exception, "cannot get actual revision: " + str(e)
         return "TODO"

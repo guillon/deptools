@@ -10,6 +10,8 @@ WORKSPACE=${WORKSPACE:-$mydir}
 artifacts=${WORKSPACE}/logs
 mkdir -p ${artifacts}
 
+. /sw/st/gnu_compil/gnu/scripts/pre-all-paths.sh
+
 cleanup() { rm -f $tmp_file; }
 
 declare -i nfail=0
@@ -80,4 +82,6 @@ tmp_file=/tmp/test_deptools_tmp_$$
 trap "cleanup" 0 1 2 15
 
 echo "Something has to be done here" > ${artifacts}/test_report.log
+cd ${mydir}
+make check >>  ${artifacts}/test_report.log
 exit 0

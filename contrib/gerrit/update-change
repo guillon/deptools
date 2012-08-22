@@ -23,7 +23,7 @@ source `dirname $0`/config.sh
 reviewer_options=`forge_reviewer_options "$reviewers"`
 
 # Forge actual remote if the first one does not exits
-remote=`forge_remote_parameter $remote $server/$project`
+remote=`forge_remote_parameter $remote $protocol $server/$project`
 
 # Update patchset
 echo "Updating patchset $change with ref $ref to remote $remote."

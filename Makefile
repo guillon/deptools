@@ -26,12 +26,32 @@
 #
 # Simple top level makefile for deptools
 #
+# usage:
+#  make all check
+#  make PREFIX=/yout/prefix install # PREFIX defaults to /usr/local
+#
+#  Actually each project should copy the dependencies script on it's top level directory.
+#
 
-all:
+PREFIX=/usr/local
+DEPTOOL_REPO=http://github.com/guillon/deptools.git
+DEPTOOL_REV=origin/master
+SCRIPTS=dependencies
+
+all: $(SCRIPTS)
+
+$(SCRIPTS): Makefile
+
+$(SCRIPTS): %: %.in
+	cp $< $@ && chmod 755 $@ && sed -e 's|@DEPTOOL_REPO@|$(DEPTOOL_REPO)|g' -e 's|@DEPTOOL_REV@|$(DEPTOOL_REV)|g' -i $@
 
 clean:
+	rm -f $(SCRIPTS)
 
-distclean:
+distclean: clean
 
-check:
+install:
+	install -D -m 755 $(SCRIPTS) $(PREFIX)/
+
+check: all
 	deptools/test.sh

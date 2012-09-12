@@ -50,7 +50,7 @@ class GitManager(SourceManager):
     def __init__(self, name, component, config = GitConfig()):
         self.name = name
         self.config = config
-        self.initial_component = component.copy()
+        self.component = component
 
         # Check mandatory fields
         if 'repos' not in component:
@@ -163,30 +163,30 @@ class GitManager(SourceManager):
     def dump(self, args = []):
         if self.config.verbose:
             print "Dump " + self.basename
-        print yaml.dump(self.initial_component)
+        print yaml.dump(self.component)
 
-    def get_actual_revision(self, revision):
+    def get_actual_revision(self):
         try:
-            revision = self._subcmd_output([self.config.git, 'rev-list', '--max-count=1', revision]).strip()
+            revision = self._subcmd_output([self.config.git, 'rev-list', '--max-count=1', 'HEAD']).strip()
         except Exception, e:
             raise Exception, "cannot get actual revision: " + str(e)
         return revision
 
-    def get_head_revision(self, revision):
+    def get_head_revision(self):
         return "HEAD"
 
     def dump_actual(self, args = []):
         if self.config.verbose:
             print "Dump_actual " + self.basename
-        actual = self.initial_component.copy()
-        actual['revision'] = self.get_actual_revision(self.get_head_revision(self.revision))
+        actual = self.component.copy()
+        actual['revision'] = self.get_actual_revision()
         print yaml.dump(actual)
 
     def dump_head(self, args = []):
         if self.config.verbose:
             print "Dump_head " + self.basename
-        actual = self.initial_component.copy()
-        actual['revision'] = self.get_head_revision(self.revision)
+        actual = self.component.copy()
+        actual['revision'] = self.get_head_revision()
         print yaml.dump(actual)
 
     def list(self, args = []):

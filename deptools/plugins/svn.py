@@ -131,29 +131,29 @@ class SvnManager(SourceManager):
             print "Dump " + self.basename
         print yaml.dump(self.component)
 
-    def get_actual_revision(self, revision):
+    def get_actual_revision(self):
         try:
             self._subcmd([self.config.svn, 'update'])
-            self._subcmd([self.config.svn, 'info', '-r', str(revision)])
+            self._subcmd([self.config.svn, 'info', '-r', 'HEAD'])
         except Exception, e:
             raise Exception, "cannot get actual revision: " + str(e)
         return "TODO"
 
-    def get_head_revision(self, revision):
+    def get_head_revision(self):
         return "HEAD"
 
     def dump_actual(self, args = []):
         if self.config.verbose:
             print "Dump_actual " + self.basename
         actual = self.component
-        actual['revision'] = self.get_actual_revision(actual['revision'])
+        actual['revision'] = self.get_actual_revision()
         print yaml.dump(actual)
 
     def dump_head(self, args = []):
         if self.config.verbose:
             print "Dump_head " + self.basename
         actual = self.component
-        actual['revision'] = self.get_head_revision(actual['revision'])
+        actual['revision'] = self.get_head_revision()
         print yaml.dump(actual)
 
     def list(self, args = []):

@@ -2,7 +2,6 @@ configurations:
   default:
     - google_testsuite
     - google_testsuite_tools
-    - webkit
 links:
   google_testsuite:
     dst_location: google_testsuite
@@ -10,28 +9,16 @@ links:
   google_testsuite_tools:
     dst_location: google_testsuite_tools
     src_location: !!null
-  webkit:
-    dst_location: webkit
-    src_location: !!null
 repositories:
   google_testsuite:
     format: git
     label: master
-    repos: /home/guillon/git/google_testsuite
+    repos: /home/compwork/guillon/pub/git/google_testsuite.git
     revision: HEAD
     alias:
   google_testsuite_tools:
     format: git
-    label: master
-    repos: /home/guillon/git/google_testsuite_tools
-    revision: HEAD
-    alias:
-  webkit:
-    format: git
-    label: master
-    revision: HEAD
-    repos: /home/guillon/git/webkit
-    alias:
+    repos: /home/compwork/guillon/pub/git/google_testsuite_tools.git
 variables:
   - top_repos
   - top_branch

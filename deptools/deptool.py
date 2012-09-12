@@ -87,14 +87,14 @@ class Dependency:
     def dump_actual(self):
         for component in self.components:
             repo = component.component
-            repo['revision'] = component.get_actual_revision(repo['revision'])
+            repo['revision'] = component.get_actual_revision()
         deps = DependencyFile(self.deps)
         deps.dump()
 
     def dump_head(self):
         for component in self.components:
             repo = component.component
-            repo['revision'] = component.get_head_revision(repo['revision'])
+            repo['revision'] = component.get_head_revision()
         deps = DependencyFile(self.deps)
         deps.dump()
 

@@ -128,9 +128,9 @@ class HgManager(SourceManager):
             print "Dump " + self.basename
         print yaml.dump(self.component)
 
-    def get_actual_revision(self, revision):
+    def get_actual_revision(self):
         try:
-            self._subcmd([self.config.hg, 'log', '--pretty=oneline', '-n1', revision])
+            self._subcmd([self.config.hg, 'log', '--pretty=oneline', '-n1', 'tip'])
         except Exception, e:
             raise Exception, "cannot get actual revision: " + str(e)
         return "TODO"

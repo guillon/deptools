@@ -7,10 +7,18 @@ embedded as part of a component that uses it.
 Thus one just have to make, check and copy the dependencies script into its own component:
 
 1. make it and check it with:
-make all
-make check
+  make all
+  make check
+
 2. copy the shell script dependencies in your source tree
-cp dependencies ~/mysourcetree
+  cp dependencies ~/mysourcetree
+
 3. edit the default dependency file in your source tree (see for instance examples/DEPENDENCIES)
-vi ~/mysourcetree/DEPENDENCIES
+  vi ~/mysourcetree/DEPENDENCIES
+
 4. that's it, you can update your DEPENDENCIES files and commit your source tree
+
+5. then extract your components in your source tree with:
+  cd ~/mysourcetree
+  ./dependencies extract
+

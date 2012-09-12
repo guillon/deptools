@@ -49,8 +49,6 @@ class Config:
         for o, a in opts:
             if o in ("-f", "--file"):
                 self.dep_file = a
-        #if len(args) > 0:
-        #    self.prg_path = args
 
     def check(self):
         return True
@@ -210,7 +208,6 @@ def main():
         error("missing command, try --help for usage")
     dependency = Dependency(config)
     dependency.exec_cmd(args[0], args[1:])
-#    dependency.dump()
 
 if __name__ == "__main__":
   main()

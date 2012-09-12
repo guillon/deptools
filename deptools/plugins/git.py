@@ -49,18 +49,39 @@ class GitManager(SourceManager):
     
     def __init__(self, name, component, config = GitConfig()):
         self.name = name
-        self.component = component
         self.config = config
-        if component['alias'] != None:
-            self.basename = component['alias']
+        self.initial_component = component.copy()
+
+        # Check mandatory fields
+        if 'repos' not in component:
+            raise Exception, "missing repository url in component"
+        self.repos = component['repos']
+
+        # Initialise plugin from available fields
+        if 'alias' in component and component['alias'] != None:
+            self.alias = component['alias']
         else:
-            self.basename = os.path.basename(self.component['repos'])
-            if self.basename.endswith(".git"):
-                self.basename = self.basename.rsplit('.', 1)[0]
-        if component['revision'] != None and component['revision'] != "HEAD":
-            self.id = component['revision']
+            self.alias = os.path.basename(self.repos)
+            if self.alias.endswith(".git"):
+                self.alias = self.alias.rsplit('.', 1)[0]
+        self.basename = self.alias
+        if 'label' in component and component['label'] != None:
+            self.label = component['label']
         else:
-            self.id = component['label']
+            self.label = "master"
+        if 'revision' in component and component['revision'] != None:
+            self.revision = component['revision']
+        else:
+            self.revision = "HEAD"
+        
+        # For all operations refering to the origin revision
+        # we must use the revision unless it is head in which
+        # case it must be the origin branch head (i.e. the origin label)
+        if self.revision == "HEAD":
+            self.remote_rev = "origin/" + self.label
+        else:
+            self.remote_rev = self.revision
+
         self.cwd = os.getcwd()
 
     def _cmd(self, args):
@@ -96,23 +117,21 @@ class GitManager(SourceManager):
     def extract(self, args = []):
         if self.config.verbose:
             print "Clone " + self.basename
-        try:
-            if not os.path.exists(self.basename):
-                self._cmd([self.config.git, 'clone', '-n', self.component['repos'], self.basename])
-            else:
-                self._subcmd([self.config.git, 'remote', 'rm', 'origin'])
-                self._subcmd([self.config.git, 'remote', 'add', 'origin', self.component['repos']])
-                self._subcmd([self.config.git, 'fetch', 'origin'])
-            self._subcmd([self.config.git, 'checkout', self.id])
-        except Exception, e:
-            raise Exception, "cannot clone component: " + str(e)
+        if not os.path.exists(self.basename):
+            try:
+                self._cmd([self.config.git, 'clone', '-n', self.repos, self.basename])
+                self._subcmd([self.config.git, 'reset', '--hard', self.remote_rev])
+            except Exception, e:
+                raise Exception, "cannot clone component: " + str(e)
+        else:
+            print "Skipping extraction of existing '" + self.basename + "'"
 
     def update(self, args = []):
         if self.config.verbose:
             print "Update " + self.basename
         try:
             self._subcmd([self.config.git, 'fetch', 'origin'])
-            self._subcmd([self.config.git, 'merge', 'origin/' + self.component['label']])
+            self._subcmd([self.config.git, 'merge', 'origin/' + self.label])
         except Exception, e:
             raise Exception, "cannot update component: " + str(e)
 
@@ -129,7 +148,7 @@ class GitManager(SourceManager):
             print "Rebase " + self.basename
         try:
             self._subcmd([self.config.git, 'fetch', 'origin'])
-            self._subcmd([self.config.git, 'rebase', 'origin/' + self.component['label']])
+            self._subcmd([self.config.git, 'rebase', 'origin/' + self.label])
         except Exception, e:
             raise Exception, "cannot rebase component: " + str(e)
 
@@ -137,14 +156,14 @@ class GitManager(SourceManager):
         if self.config.verbose:
             print "Deliver " + self.basename
         try:
-            self._subcmd([self.config.git, 'push', 'origin', self.component['label']])
+            self._subcmd([self.config.git, 'push', 'origin', self.label])
         except Exception, e:
             raise Exception, "cannot deliver component: " + str(e)
 
     def dump(self, args = []):
         if self.config.verbose:
             print "Dump " + self.basename
-        print yaml.dump(self.component)
+        print yaml.dump(self.initial_component)
 
     def get_actual_revision(self, revision):
         try:
@@ -159,25 +178,21 @@ class GitManager(SourceManager):
     def dump_actual(self, args = []):
         if self.config.verbose:
             print "Dump_actual " + self.basename
-        actual = self.component
-        actual['revision'] = self.get_actual_revision(actual['revision'])
+        actual = self.initial_component.copy()
+        actual['revision'] = self.get_actual_revision(self.get_head_revision(self.revision))
         print yaml.dump(actual)
 
     def dump_head(self, args = []):
         if self.config.verbose:
             print "Dump_head " + self.basename
-        actual = self.component
-        actual['revision'] = self.get_head_revision(actual['revision'])
+        actual = self.initial_component.copy()
+        actual['revision'] = self.get_head_revision(self.revision)
         print yaml.dump(actual)
 
     def list(self, args = []):
         if self.config.verbose:
             print "List " + self.basename
-        if self.component['alias'] != None:
-            alias_str = "," + self.component['alias']
-        else:
-            alias_str = ""
-        print self.name + "," + self.component['label'] + "@" + self.component['revision'] +  "," + self.component['repos'] + alias_str
+        print self.name + "," + self.label + "@" + self.revision +  "," + self.repos + "," + self.alias
 
 
 class GitManagerCmdLine:
@@ -198,6 +213,11 @@ class GitManagerCmdLine:
         self._manager = None
         self._exec_cmd(args[1], args[2:])
 
+    @staticmethod
+    def error(msg):
+        print >>sys.stderr, sys.argv[0] + ": error: "+ msg
+        sys.exit(1)
+
     def _serialize_manager(self, manager, ostream = sys.stdout):
         print >> ostream, yaml.dump(manager)
 
@@ -205,46 +225,54 @@ class GitManagerCmdLine:
         return yaml.load(istream)
 
     def _new_session(self, args_serials):
-        params_stream = open(args_serials[0], "r")
-        params = yaml.load(params_stream)
+        try:
+            params_stream = open(args_serials[0], "r")
+        except IOError, e:
+            self.error("can't open serial: " + str(e))
+        with params_stream:
+            params = yaml.load(params_stream)
         self._manager = GitManager(params['name'], params['component'])
 
     def _store_session(self):
-        ofile = open(self._serial, "w")
-        self._serialize_manager(self._manager, ofile)
+        try:
+            ofile = open(self._serial, "w")
+        except IOError, e:
+            self.error("can't write serial: " + str(e))
+        with ofile:
+            self._serialize_manager(self._manager, ofile)
 
     def _restore_session(self):
-        ifile = open(self._serial, "r")
-        self._manager = self._deserialize_manager(ifile)
+        try:
+            ifile = open(self._serial, "r")
+        except IOError, e:
+            self.error("can't open serial: " + str(e))
+        with ifile:
+            self._manager = self._deserialize_manager(ifile)
 
     def _exec_cmd(self, cmd_name, args):
         if cmd_name == "new":
             self._new_session(args)
         else:
             self._restore_session()
-            if cmd_name == "execute":
-                self._manager.execute(args)
-            elif cmd_name == "extract":
-                self._manager.extract(args)
-            elif cmd_name == "update":
-                self._manager.update(args)
-            elif cmd_name == "commit":
-                self._manager.commit(args)
-            elif cmd_name == "rebase":
-                self._manager.rebase(args)
-            elif cmd_name == "deliver":
-                self._manager.deliver(args)
-            elif cmd_name == "dump":
-                self._manager.dump(args)
-            elif cmd_name == "dump_actual":
-                self._manager.dump_actual(args)
-            elif cmd_name == "list":
-                self._manager.list(args)
+            dispatch = { 'execute': self._manager.execute,
+                         'extract': self._manager.extract,
+                         'update': self._manager.update,
+                         'commit': self._manager.commit,
+                         'rebase': self._manager.rebase,
+                         'deliver': self._manager.deliver,
+                         'dump': self._manager.dump,
+                         'dump_actual': self._manager.dump_actual,
+                         'dump_head': self._manager.dump_head,
+                         'list': self._manager.list }
+            if cmd_name in dispatch:
+                dispatch[cmd_name](args)
             else:
-                print "unexpected command: ignored: " + " ".join(args)
+                print "unexpected command, ignored: " + cmd_name + " ".join(args)
         self._store_session()
 
 if __name__ == "__main__":
+    if len(sys.argv) < 2:
+        GitManagerCmdLine._error("missing arguments. Usage: git.py serial cmd ...")
     GitManagerCmdLine(sys.argv[1:])
 else:
     if verbose == 1:

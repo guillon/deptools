@@ -26,7 +26,16 @@
 # OTHER DEALINGS IN THE SOFTWARE.
 #
 
-import os, sys, getopt
+import os, sys
+def check_python_version_():
+    try:
+        assert sys.hexversion >= 0x02040000
+    except:
+        print >>sys.stderr, 'deptools: warning: python version >= 2.4 is required'
+        sys.exit(1)
+check_python_version_()  
+
+import getopt
 
 # non standard package, use local version
 import yaml

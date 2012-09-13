@@ -119,7 +119,7 @@ class GitManager(SourceManager):
             print "Clone " + self.basename
         if not os.path.exists(self.basename):
             try:
-                self._cmd([self.config.git, 'clone', '-n', self.repos, self.basename])
+                self._cmd([self.config.git, 'clone', '-b', self.label, self.repos, self.basename])
                 self._subcmd([self.config.git, 'reset', '--hard', self.remote_rev])
             except Exception, e:
                 raise Exception, "cannot clone component: " + str(e)

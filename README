@@ -73,7 +73,7 @@ files acts as an always up-to-date manifest.
 The supported repositories formats are implemented as plugins to deptools:
 * git: git repository
 * svn: subversion repositories
-* tar: archive file (under development)
+* tar: archive files
 * hg: mercurial (to be tested)
 
 The actions that can be run on each component are for instance:

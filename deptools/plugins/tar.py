@@ -46,13 +46,19 @@
 # The optional fields of the component are:
 # - revision: either HEAD (no check of content) or the sha1sum
 # - alias: the extraction dirname, default to archive basename
+# - skip_dirs: specify the number of leading path components to
+#   remove when extracting the archive into the dst dir, useful
+#   for removing the top level dir of an archive.
+# - ignore_status: set to 'true' for ignoring non-zero exit code
+#   of the archive extraction, useful for some tar archives with
+#   special files that can't be created but are useless.
 #
  
 from subprocess import call, check_call, Popen, PIPE
 from plugins import SourceManager
 import os, sys
 import yaml
-import tempfile
+import tempfile, shutil
 
 verbose = 0
 
@@ -102,7 +108,7 @@ class URI:
         parts = uri.split(":", 1)
         if len(parts) == 1:
             if len(parts[0]) == 0 or parts[0][0] != "/":
-                raise Exception("missing scheme in URI: " + self.uri)
+                raise Exception("missing scheme in URI: " + self.uri_)
             else:
                 # Special case of file, we allow local file specification
                 self.sch_ = "file"
@@ -114,11 +120,11 @@ class URI:
             self.sch_ = parts[0]
             parts = parts[1].split("/", 2)
             if len(parts) != 3 or parts[0] != "" or parts[1] != "" or parts[2] == "":
-                raise Exception("malformed location in URI, truncated or missing '//': " + self.uri)
+                raise Exception("malformed location in URI, truncated or missing '//': " + self.uri_)
             self.location_ = parts[2]
             parts = parts[2].split("/", 1)
             if len(parts) != 2:
-                raise Exception("malformed path in URI location, missing starting '/': " + self.uri)
+                raise Exception("malformed path in URI location, missing starting '/': " + self.uri_)
             self.remote_ = parts[0]
             self.path_ = "/" + parts[1]
 
@@ -162,6 +168,40 @@ class URI:
         """ Returns the path specification for the URI. """
         return self.path_
 
+class utils:
+    """ This is a namespace for utility functions. """
+    @staticmethod
+    def move_dirs(srcdir, dstdir, skip_dirs=0):
+        """
+        Move the directory content of srcdir into dstdir.
+        Optionally skipping the given number of lead path
+        components when moving into dstdir.
+        The directory dstdir must not exist before the call.
+        For instance:
+          move_dirs("src", "dst") does mv src/* dst/*
+          move_dirs("src", "dst", skip_dirs=1) does
+          for each src/<path>, mv src/<path>/* dst/
+        """
+        assert skip_dirs >= 0
+        assert not os.path.exists(dstdir)
+        assert os.path.isdir(srcdir)
+        from os.path import join as join
+        from os.path import isdir as isdir
+        dirs = ["."]
+        for depth in range(skip_dirs):
+            new_dirs = []
+            for y in dirs:
+                for x in os.listdir(join(srcdir, y)):
+                    if isdir(join(srcdir, y, x)):
+                        new_dirs.append(join(y, x))
+            dirs = new_dirs
+        os.mkdir(dstdir)
+        for y in dirs:
+            for file in os.listdir(join(srcdir,y)):
+                if os.path.exists(join(dstdir, file)):
+                    raise Exception, "File exists " + join(dstdir, file)
+                os.rename(join(srcdir, y, file), join(dstdir, file))
+
 class TarManager(SourceManager):
     """ This class implements the tar format manager plugin.
     The tests for this class are in test_tar_*.sh.
@@ -178,16 +218,14 @@ class TarManager(SourceManager):
         self.component = component
 
         # Check mandatory fields
-        self.repos = component.get('repos')
-        if self.repos == None:
+        if 'repos' not in component:
             raise Exception("missing archive uri in component")
-        self.revision = component.get('revision')
-        if self.revision == None: self.revision = "HEAD"
 
         # Initialise plugin from available fields
+        self.repos = str(component.get('repos'))
+        self.revision = str(component.get('revision', "HEAD"))
         uri = URI(self.repos)
-        self.alias = component.get('alias')
-        if self.alias == None: self.alias = uri.basename()
+        self.alias = str(component.get('alias', uri.basename()))
         self.basename = self.alias
         self.filename = uri.basename()
         (self.uri_basename, _) = uri.base_and_ext()
@@ -196,23 +234,32 @@ class TarManager(SourceManager):
         self.uri = uri.uri()
         self.remote = uri.remote()
         self.path = uri.path()
+        self.ignore_status = component.get("ignore_status", False)
+        if type(self.ignore_status) != type(True):
+            raise Exception, "ignore_status field must be either 'true' or 'false'"
+        self.skip_dirs = component.get("skip_dirs", 0)
+        if type(self.skip_dirs) != type(0) or self.skip_dirs < 0:
+            raise Exception, "skip_dirs field must be a positive integer"
         self.cwd = os.getcwd()
 
-    def _cmd(self, args):
+    def _cmd(self, args, ignore_status=False):
         if self.config.verbose:
             print " ".join(args)
-        check_call(args)
+        status = call(args)
+        if not ignore_status and status != 0:
+            raise Exception, ("command returned non-zero status " + str(status) +
+                              ": " + " ".join(["'"+x+"'" for x in args]))
 
     def _cmd_output(self, args):
         if self.config.verbose:
             print " ".join(args)
         return Popen(args, stdout=PIPE).communicate()[0]
     
-    def _subcmd(self, args):
+    def _subcmd(self, args, ignore_status=True):
         if not os.path.exists(self.basename):
             raise Exception("path does not exist: " + self.basename)
         os.chdir(self.basename)
-        self._cmd(args)
+        self._cmd(args, ignore_status)
         os.chdir(self.cwd)
 
     def _subcmd_output(self, args):
@@ -250,22 +297,40 @@ class TarManager(SourceManager):
         except Exception, e:
             raise Exception("cannot acces remote URI: " + self.repos + ": " + str(e))
 
+    def _check_revision(self):
+        if self.revision != "HEAD" and self.revision != self.get_actual_revision():
+            raise Exception("archive component %s sha1sum (%s) mismatch expected sha1sum (%s)" %
+                            (self.name_, self.get_actual_revision(), self.revision))
+
     def _extract_uri(self):
         assert not os.path.exists(self.basename)
         tmpdir = self._make_tmpdir()
-        if self.type == URI._type.TAR:
-            self._cmd([self.config.tar, "xvf", self._get_cached_file(), "-C", tmpdir])
-        elif self.type == URI._type.TAR_GZ:
-            self._cmd([self.config.tar, "xvzf", self._get_cached_file(), "-C", tmpdir])
-        elif self.type == URI._type.TAR_BZ2:
-            self._cmd([self.config.tar, "xvjf", self._get_cached_file(), "-C", tmpdir])
-        elif self.type == URI._type.TAR_XZ:
-            self._cmd([self.config.tar, "xvJf", self._get_cached_file(), "-C", tmp_dir])
-        elif self.type == URI._type.ZIP:
-            self._cmd([self.config.unzip, "-d", tmpdir, self._get_cached_file()])
-        else:
-            raise Exception("unsupported file type in URI: " + self.repos)
-        os.rename(tmpdir, self.basename)
+        try:
+            if self.type == URI._type.TAR:
+                self._cmd([self.config.tar, "xf", self._get_cached_file(), "-C", tmpdir],
+                          self.ignore_status)
+            elif self.type == URI._type.TAR_GZ:
+                self._cmd([self.config.tar, "xzf", self._get_cached_file(), "-C", tmpdir],
+                          self.ignore_status)
+            elif self.type == URI._type.TAR_BZ2:
+                self._cmd([self.config.tar, "xjf", self._get_cached_file(), "-C", tmpdir],
+                          self.ignore_status)
+            elif self.type == URI._type.TAR_XZ:
+                self._cmd([self.config.tar, "xJf", self._get_cached_file(), "-C", tmp_dir],
+                          self.ignore_status)
+            elif self.type == URI._type.ZIP:
+                self._cmd([self.config.unzip, "-q", "-d", tmpdir, self._get_cached_file()],
+                          self.ignore_status)
+            else:
+                raise Exception("unsupported file type in URI: " + self.repos)
+            dirname = os.path.dirname(self.basename)
+            if dirname == "": dirname = "."
+            if not os.path.isdir(dirname):
+                os.makedirs(dirname)
+            utils.move_dirs(tmpdir, self.basename, self.skip_dirs)
+        finally:
+            if os.path.exists(tmpdir):
+                shutil.rmtree(tmpdir)
             
     def name(self):
         return self.name_
@@ -275,19 +340,16 @@ class TarManager(SourceManager):
             print "Execute " + self.basename
         self._subcmd(args)
 
-    
     def extract(self, args = []):
         if self.config.verbose:
             print "Extract " + self.basename
         if not os.path.exists(self.basename):
             try:
                 self._fetch_uri()
+                self._check_revision()
                 self._extract_uri()
             except Exception, e:
                 raise Exception("cannot extract component: " + str(e))
-            if self.revision != "HEAD" and self.revision != self.get_actual_revision():
-                raise Exception("archive component %s sha1sum (%s) mismatch expected sha1sum (%s)" %
-                                (self.name_, self.get_actual_revision(), self.revision))
         else:
             print "Skipping extraction of existing '" + self.basename + "'"
 

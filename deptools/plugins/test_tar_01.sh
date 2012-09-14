@@ -48,7 +48,7 @@ echo "Working dir: $tmpdir"
 cd $tmpdir
 cwd=$tmpdir
 
-# Be sure that git is present
+# Be sure that tools are present
 tar --version || error "tar: command not found. tar must be installed for the tar plugin to work"
 curl --version || error "curl: command not found. tar must be installed for the tar plugin to work"
 which scp || error "scp: command not found. tar must be installed for the scp plugin to work"
@@ -56,7 +56,7 @@ which scp || error "scp: command not found. tar must be installed for the scp pl
 # Clean from previous runs
 rm -rf ${tmpbase}*
 
-# Prepare tree from work dir and push to a new git reference
+# Prepare tree from work dir and creates an archive
 mkdir -p ${tmpbase}.1.work
 cd ${tmpbase}.1.work
 echo "a file" >afile

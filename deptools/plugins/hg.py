@@ -74,6 +74,9 @@ class HgManager(SourceManager):
         self._cmd(args)
         os.chdir(self.cwd)
         
+    def name(self):
+        return self.name
+
     def execute(self, args):
         if self.config.verbose:
             print "Execute " + self.basename

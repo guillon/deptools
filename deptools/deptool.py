@@ -90,22 +90,23 @@ class Dependency:
         self.deps = deps.content
         
     def dump(self):
-        deps = DependencyFile(self.deps)
-        deps.dump()
+        DependencyFile(self.deps).dump()
 
     def dump_actual(self):
+        deps_actual = copy.deepcopy(self.deps)
         for component in self.components:
-            repo = component.component
-            repo['revision'] = component.get_actual_revision()
-        deps = DependencyFile(self.deps)
-        deps.dump()
+            name = component.name()
+            actual = component.get_actual_revision()
+            deps_actual['repositories'][name]['revision'] = actual
+        DependencyFile(deps_actual).dump()
 
     def dump_head(self):
+        deps_head = copy.deepcopy(self.deps)
         for component in self.components:
-            repo = component.component
-            repo['revision'] = component.get_head_revision()
-        deps = DependencyFile(self.deps)
-        deps.dump()
+            name = component.name()
+            head = component.get_head_revision()
+            deps_head['repositories'][name]['revision'] = head
+        DependencyFile(deps_head).dump()
 
     def prepare(self):
         list = self.deps["configurations"][self.configuration]
@@ -181,7 +182,7 @@ def usage(config):
   print " extract_or_updt: extract all dependencies or update if already existing"
   print " commit: commit all dependencies"
   print " freeze: freeze all dependencies revisions"
-  print " exec: execute command for all dependencies"
+  print " execute: execute command for all dependencies"
   print " dump: dumps to stdout the dependencies"
   print " dump_actual: dumps to stdout the dependencies with actual revisions"
   print " dump_head: dumps to stdout the dependencies at head revisions"

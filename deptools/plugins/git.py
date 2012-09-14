@@ -108,7 +108,10 @@ class GitManager(SourceManager):
         output = self._cmd_output(args)
         os.chdir(self.cwd)
         return output
-        
+
+    def name(self):
+        return self.name
+
     def execute(self, args):
         if self.config.verbose:
             print "Execute " + self.basename

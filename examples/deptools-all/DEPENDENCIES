@@ -1,0 +1,13 @@
+configurations:
+  default: [ dep-tools, gh-pages ]
+repositories:
+  dep-tools:
+    format: git
+    repos: https://github.com/guillon/deptools.git
+    label: master
+    alias: dep-tools
+  gh-pages:
+    format: git
+    repos: https://github.com/guillon/deptools.git
+    label: gh-pages
+    alias: gh-pages

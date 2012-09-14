@@ -1,2 +1,18 @@
-Some example DEPENDENCIES files.
-Still need to add some running examples there.
+Some example of dependencies specification.
+
+Each directory contains a DEPENDENCY file.
+For extracting the example projects, get into
+each directory and run the dependencies script.
+
+For instance:
+    $ cd hello-cz
+    $ ../../dependencies extract
+    Cloning into 'deptools'...
+    Cloning into 'hello'...
+    HEAD is now at e1bd9c1 Merge commit 'repo.or.cz/mob'
+    Cloning into 'yap'...
+    HEAD is now at 336cd1e Revert "cmd_unstage: work correctly from a subdirectory
+
+A a real project would copy the dependencies
+script along with the DEPENDENCY file, but there we
+use the script built by make all.

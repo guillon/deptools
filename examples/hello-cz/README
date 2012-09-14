@@ -1,6 +1,0 @@
-In order to test this example, run:
-../../dependencies extract
-
-This should extract the two components hello and yap.
-
-Refer to the DEPENDENCIES file for the components specification.

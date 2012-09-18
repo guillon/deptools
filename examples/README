@@ -16,3 +16,11 @@ For instance:
 A a real project would copy the dependencies
 script along with the DEPENDENCY file, but there we
 use the script built by make all.
+
+Optionally in development mode, avoid the extraction of deptools from the actual
+deptools repository with:
+    $ cd hello-cz
+    $ ../../deptools/deptool.py extract
+
+In order to run all examples at once as a validation check, run the provided script:
+    $ run_all_examples.sh

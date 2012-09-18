@@ -1,0 +1,66 @@
+configurations:
+  default:
+    - Framework
+    - TEScripts
+    - CI-Utilities
+    - CI-RNgeninfo
+    - Services
+    - Monitor
+  minimal:
+    - Framework
+    - TEScripts
+    - CI-Utilities
+    - CI-RNgeninfo
+    - Services
+    - Monitor
+
+repositories:
+  Framework:
+    format: git
+    label: master
+    repos: gitolite@codex.cro.st.com:tsysint/CI/Framework.git 
+    revision: HEAD
+    alias: 
+
+  TEScripts:
+    format: git
+    label: 2012.1
+    repos: gitolite@codex.cro.st.com:tsysint/CI/TEScripts.git
+    revision: 5906f6feb59dd870be1c46014393698c1cda078c
+    alias: ./Tests/STxP70/2012.1
+
+  TESTS:
+    format: git
+    label: 2012.1
+    repos: gitolite@codex.cro.st.com:tsysint/CI/TESTS.git
+    revision: 879723926050a6fbdd042b1537a0b3771333e667
+    alias: ./Tests/STxP70/TESTS
+
+  CI-Utilities:
+    format: git
+    label: master
+    repos: gitolite@codex.cro.st.com:tsysint/CI-Utilities.git
+    revision: 4.6.0
+    alias: ./CI-Utilities/4.6.0
+  
+  CI-RNgeninfo:
+    format: git
+    label: master
+    repos: gitolite@codex.cro.st.com:tsysint/CI-RNgeninfo.git
+    revision: HEAD
+    alias: ./CI-Utilities/CI-RNgeninfo
+
+  Services:
+    format: git
+    label: master
+    repos: gitolite@codex.cro.st.com:tsysint/CI/Services.git
+    revision: HEAD
+    alias: ./services
+
+  Monitor:
+    format: git
+    label: master
+    repos: gitolite@codex.cro.st.com:tsysint/CI/Monitor.git
+    revision: HEAD
+    alias: ./Monitor
+

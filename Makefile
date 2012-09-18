@@ -53,5 +53,10 @@ distclean: clean
 install:
 	install -D -m 755 $(SCRIPTS) $(PREFIX)/
 
-check: all
+check: check-tests check-examples
+
+check-tests: all
 	deptools/test.sh
+
+check-examples: all
+	examples/run_all_examples.sh

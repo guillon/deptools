@@ -49,15 +49,19 @@ version = "0.0.1"
 class DefaultConfig:
     def __init__(self):
         self.dep_file = "DEPENDENCIES"
+        self.configuration = "default"
 
 class Config:
     def __init__(self, params):
         self.dep_file = params.dep_file
+        self.configuration = params.configuration
 
     def parse_options(self, opts, args):
         for o, a in opts:
             if o in ("-f", "--file"):
                 self.dep_file = a
+            if o in ("-c", "--config"):
+                self.configuration = a
 
     def check(self):
         return True
@@ -72,11 +76,10 @@ class DependencyFile:
         self.content = yaml.load(istream)
 
 class Dependency:
-    def __init__(self, config, configuration="default"):
+    def __init__(self, config):
         self.config = config
         self.deps = None
         self.components = []
-        self.configuration = configuration
         self.load()
         self.prepare()
 
@@ -109,7 +112,12 @@ class Dependency:
         DependencyFile(deps_head).dump()
 
     def prepare(self):
-        list = self.deps["configurations"][self.configuration]
+        configurations = self.deps.get("configurations")
+        if configurations == None:
+            raise Exception, "Missing configurations section in dependency file: " + self.config.dep_file
+        list = configurations.get(self.config.configuration)
+        if list == None:
+            raise Exception, "Missing configuration in dependency file: " + self.config.configuration
         self.components = []
         for component in list:
             repository = self.deps["repositories"][component]
@@ -189,6 +197,7 @@ def usage(config):
   print ""
   print "where options are:"
   print " -f|--file <dep_file> : dependency file. Default [" + config.dep_file + "]"
+  print " -c|--config <configuration> : configuration to use from the dependency file. Default [" + config.configuration + "]"
   print " -q|--quiet : quiet mode"
   print " -v|--version : output this script version"
   print " -h[--help : this help page"
@@ -199,7 +208,7 @@ def main():
     def_config = DefaultConfig()
     config = Config(def_config)
     try:
-        opts, args = getopt.gnu_getopt(sys.argv[1:], "f:qvh", ["file=", "quiet", "version", "help"])
+        opts, args = getopt.gnu_getopt(sys.argv[1:], "f:c:qvh", ["file=", "config=", "quiet", "version", "help"])
     except getopt.GetoptError, err:
         print_error(str(err))
         usage(def_config)

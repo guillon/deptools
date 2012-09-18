@@ -45,8 +45,8 @@ class SvnManager(SourceManager):
     SvnManagerCmdLine class below.
     The Configuration class for this class is the SvnConfig class.
     """
-    name = "svn"
-    description = "svn repository manager"
+    name_ = "svn"
+    description_ = "svn repository manager"
     
     def __init__(self, name, component, config = SvnConfig()):
         self.name = name
@@ -74,7 +74,7 @@ class SvnManager(SourceManager):
         os.chdir(self.cwd)
         
     def name(self):
-        return self.name
+        return self.name_
 
     def execute(self, args):
         if self.config.verbose:

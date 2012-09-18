@@ -45,8 +45,8 @@ class HgManager(SourceManager):
     HgManagerCmdLine class below.
     The Configuration class for this class is the HgConfig class.
     """
-    name = "hg"
-    description = "mercurial repository manager"
+    name_ = "hg"
+    description_ = "mercurial repository manager"
     
     def __init__(self, name, component, config = HgConfig()):
         self.name = name
@@ -75,7 +75,7 @@ class HgManager(SourceManager):
         os.chdir(self.cwd)
         
     def name(self):
-        return self.name
+        return self.name_
 
     def execute(self, args):
         if self.config.verbose:

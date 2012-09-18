@@ -56,9 +56,10 @@ class PluginMount(type):
             p = cls.plugin_map[name]
         except KeyError:
             for p in cls.plugins:
-                if p.name == name:
+                if p.name_ == name:
                     cls.plugin_map[name] = p
                     return p
+            raise Exception, "Plugin not found: " + name
         return p
     
 
@@ -85,9 +86,9 @@ class PluginLoader:
 class SourceManager:
     """ SourceManager plugins must derive from this class.
     Methods that must be implemented by SourceManager plugins are:
-    extract, update, commit, rebase, deliver, dump, list.
-    Attributes are:
-    name, description.
+    name, extract, update, commit, rebase, deliver, dump, list.
+    Class attributes that must be available:
+    name_, description_
     """
     __metaclass__ = PluginMount
 

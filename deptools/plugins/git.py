@@ -44,8 +44,8 @@ class GitManager(SourceManager):
     GitManagerCmdLine class below.
     The Configuration class for this class is the GitConfig class.
     """
-    name = "git"
-    description = "git repository manager"
+    name_ = "git"
+    description_ = "git repository manager"
     
     def __init__(self, name, component, config = GitConfig()):
         self.name = name
@@ -110,7 +110,7 @@ class GitManager(SourceManager):
         return output
 
     def name(self):
-        return self.name
+        return self.name_
 
     def execute(self, args):
         if self.config.verbose:

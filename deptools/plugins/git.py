@@ -55,22 +55,22 @@ class GitManager(SourceManager):
         # Check mandatory fields
         if 'repos' not in component:
             raise Exception, "missing repository url in component"
-        self.repos = component['repos']
+        self.repos = str(component['repos'])
 
         # Initialise plugin from available fields
         if 'alias' in component and component['alias'] != None:
-            self.alias = component['alias']
+            self.alias = str(component['alias'])
         else:
             self.alias = os.path.basename(self.repos)
             if self.alias.endswith(".git"):
                 self.alias = self.alias.rsplit('.', 1)[0]
         self.basename = self.alias
         if 'label' in component and component['label'] != None:
-            self.label = component['label']
+            self.label = str(component['label'])
         else:
             self.label = "master"
         if 'revision' in component and component['revision'] != None:
-            self.revision = component['revision']
+            self.revision = str(component['revision'])
         else:
             self.revision = "HEAD"
         

@@ -169,11 +169,11 @@ class TarManager(SourceManager):
     TarManagerCmdLine class below.
     The Configuration class for this class is the TarConfig class.
     """
-    name = "tar"
-    description = "tar archive manager"
+    plugin_name_ = "tar"
+    plugin_description_ = "tar archive manager"
 
     def __init__(self, name, component, config = TarConfig()):
-        self.name = name
+        self.name_ = name
         self.config = config
         self.component = component
 
@@ -267,6 +267,9 @@ class TarManager(SourceManager):
             raise Exception("unsupported file type in URI: " + self.repos)
         os.rename(tmpdir, self.basename)
             
+    def name(self):
+        return self.name_
+
     def execute(self, args):
         if self.config.verbose:
             print "Execute " + self.basename
@@ -284,7 +287,7 @@ class TarManager(SourceManager):
                 raise Exception("cannot extract component: " + str(e))
             if self.revision != "HEAD" and self.revision != self.get_actual_revision():
                 raise Exception("archive component %s sha1sum (%s) mismatch expected sha1sum (%s)" %
-                                (self.name, self.get_actual_revision(), self.revision))
+                                (self.name_, self.get_actual_revision(), self.revision))
         else:
             print "Skipping extraction of existing '" + self.basename + "'"
 
@@ -340,7 +343,7 @@ class TarManager(SourceManager):
     def list(self, args = []):
         if self.config.verbose:
             print "List " + self.basename
-        print self.name + "," + self.revision +  "," + self.repos + "," + self.alias
+        print self.name_ + "," + self.revision +  "," + self.repos + "," + self.alias
 
 
 class TarManagerCmdLine:

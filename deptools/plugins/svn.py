@@ -45,11 +45,11 @@ class SvnManager(SourceManager):
     SvnManagerCmdLine class below.
     The Configuration class for this class is the SvnConfig class.
     """
-    name_ = "svn"
-    description_ = "svn repository manager"
+    plugin_name_ = "svn"
+    plugin_description_ = "svn repository manager"
     
     def __init__(self, name, component, config = SvnConfig()):
-        self.name = name
+        self.name_ = name
         self.component = component
         self.config = config
         if component['alias'] != None:
@@ -86,7 +86,7 @@ class SvnManager(SourceManager):
             print "Clone " + self.basename
         try:
             if os.path.exists(self.basename):
-                print "Cannot extract component " +  self.name + ", path exists: " + self.basename + ". Skipped."
+                print "Cannot extract component " +  self.name_ + ", path exists: " + self.basename + ". Skipped."
                 return
             self._cmd([self.config.svn, 'checkout', self.component['repos'] + "/" + self.branch + "@" + str(self.component['revision']), self.basename])
         except Exception, e:
@@ -166,7 +166,7 @@ class SvnManager(SourceManager):
             alias_str = "," + self.component['alias']
         else:
             alias_str = ""
-        print self.name + "," + self.component['label'] + "@" + str(self.component['revision']) +  "," + self.component['repos'] + alias_str
+        print self.name_ + "," + self.component['label'] + "@" + str(self.component['revision']) +  "," + self.component['repos'] + alias_str
 
 
 class SvnManagerCmdLine:

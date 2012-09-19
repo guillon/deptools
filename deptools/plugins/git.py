@@ -44,11 +44,11 @@ class GitManager(SourceManager):
     GitManagerCmdLine class below.
     The Configuration class for this class is the GitConfig class.
     """
-    name_ = "git"
-    description_ = "git repository manager"
+    plugin_name_ = "git"
+    plugin_description_ = "git repository manager"
     
     def __init__(self, name, component, config = GitConfig()):
-        self.name = name
+        self.name_ = name
         self.config = config
         self.component = component
 
@@ -195,7 +195,7 @@ class GitManager(SourceManager):
     def list(self, args = []):
         if self.config.verbose:
             print "List " + self.basename
-        print self.name + "," + self.label + "@" + self.revision +  "," + self.repos + "," + self.alias
+        print self.name_ + "," + self.label + "@" + self.revision +  "," + self.repos + "," + self.alias
 
 
 class GitManagerCmdLine:

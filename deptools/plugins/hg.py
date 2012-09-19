@@ -45,11 +45,11 @@ class HgManager(SourceManager):
     HgManagerCmdLine class below.
     The Configuration class for this class is the HgConfig class.
     """
-    name_ = "hg"
-    description_ = "mercurial repository manager"
+    plugin_name_ = "hg"
+    plugin_description_ = "mercurial repository manager"
     
     def __init__(self, name, component, config = HgConfig()):
-        self.name = name
+        self.name_ = name
         self.component = component
         self.config = config
         if component['alias'] != None:
@@ -87,7 +87,7 @@ class HgManager(SourceManager):
             print "Clone " + self.basename
         try:
             if os.path.exists(self.basename):
-                print "Cannot extract component " +  self.name + ", path exists: " + self.basename + ". Skipped."
+                print "Cannot extract component " +  self.name_ + ", path exists: " + self.basename + ". Skipped."
                 return
             self._cmd([self.config.hg, 'clone', self.component['repos']])
         except Exception, e:
@@ -152,7 +152,7 @@ class HgManager(SourceManager):
             alias_str = "," + self.component['alias']
         else:
             alias_str = ""
-        print self.name + "," + self.component['label'] + "@" + self.component['revision'] +  "," + self.component['repos'] + alias_str
+        print self.name_ + "," + self.component['label'] + "@" + self.component['revision'] +  "," + self.component['repos'] + alias_str
 
 
 class HgManagerCmdLine:

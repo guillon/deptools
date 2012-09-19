@@ -35,7 +35,7 @@ def check_python_version_():
         sys.exit(1)
 check_python_version_()  
 
-import getopt
+import getopt, copy
 
 # non standard package, use local version
 import yaml
@@ -113,15 +113,22 @@ class Dependency:
 
     def prepare(self):
         configurations = self.deps.get("configurations")
-        if configurations == None:
-            raise Exception, "Missing configurations section in dependency file: " + self.config.dep_file
-        list = configurations.get(self.config.configuration)
-        if list == None:
-            raise Exception, "Missing configuration in dependency file: " + self.config.configuration
+        if configurations == None or type(configurations) != type({}):
+            raise Exception, "Missing configurations map in dependency file: " + self.config.dep_file
+        components = configurations.get(self.config.configuration)
+        if components == None or type(components) != type([]):
+            raise Exception, "Missing components list specification for configuration: " + self.config.configuration
+        repositories = self.deps.get("repositories")
+        if repositories == None or type(repositories) != type({}):
+            raise Exception, "Missing repositories map in dependency file: " + self.config.dep_file
         self.components = []
-        for component in list:
-            repository = self.deps["repositories"][component]
-            format = repository["format"]
+        for component in components:
+            repository = repositories.get(component)
+            if repository == None or type(repository) != type({}):
+                raise Exception, "Missing repository map for component: " + component
+            format = repository.get("format")
+            if format == None or type(format) != type(""):
+                raise Exception, "Missing format specification for component: " + component
             self.components.append(SourceManager.get_plugin(format)(component, repository))
 
     def foreach(self, command, args=[]):

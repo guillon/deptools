@@ -1,66 +1,38 @@
 configurations:
   default:
-    - Framework
-    - TEScripts
-    - CI-Utilities
-    - CI-RNgeninfo
-    - Services
-    - Monitor
+    - care
+    - care-tests-0.3.0
+    - care-tests
+    - atos-1.0
   minimal:
-    - Framework
-    - TEScripts
-    - CI-Utilities
-    - CI-RNgeninfo
-    - Services
-    - Monitor
+    - care
+    - care-tests
 
 repositories:
-  Framework:
+  care:
     format: git
     label: master
-    repos: gitolite@codex.cro.st.com:tsysint/CI/Framework.git 
+    repos: gitolite@codex.cro.st.com:okla/care
     revision: HEAD
     alias: 
 
-  TEScripts:
-    format: git
-    label: 2012.1
-    repos: gitolite@codex.cro.st.com:tsysint/CI/TEScripts.git
-    revision: 5906f6feb59dd870be1c46014393698c1cda078c
-    alias: ./Tests/STxP70/2012.1
-
-  TESTS:
-    format: git
-    label: 2012.1
-    repos: gitolite@codex.cro.st.com:tsysint/CI/TESTS.git
-    revision: 879723926050a6fbdd042b1537a0b3771333e667
-    alias: ./Tests/STxP70/TESTS
-
-  CI-Utilities:
+  care-tests-0.3.0:
     format: git
     label: master
-    repos: gitolite@codex.cro.st.com:tsysint/CI-Utilities.git
-    revision: 4.6.0
-    alias: ./CI-Utilities/4.6.0
-  
-  CI-RNgeninfo:
+    repos: gitolite@codex.cro.st.com:okla/care.git
+    revision: 0.3.0
+    alias: ./tests/care/0.3.0
+
+  care-tests:
     format: git
     label: master
-    repos: gitolite@codex.cro.st.com:tsysint/CI-RNgeninfo.git
+    repos: gitolite@codex.cro.st.com:okla/care.git
     revision: HEAD
-    alias: ./CI-Utilities/CI-RNgeninfo
+    alias: ./tests/care/head
 
-  Services:
+  atos-1.0:
     format: git
     label: master
-    repos: gitolite@codex.cro.st.com:tsysint/CI/Services.git
-    revision: HEAD
-    alias: ./services
-
-  Monitor:
-    format: git
-    label: master
-    repos: gitolite@codex.cro.st.com:tsysint/CI/Monitor.git
-    revision: HEAD
-    alias: ./Monitor
-
+    repos: gitolite@codex.cro.st.com:okla/atos-utils.git
+    revision: 1.0
+    alias: ./atos/1.0

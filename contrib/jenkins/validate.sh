@@ -3,85 +3,23 @@
 # Unitary tests for deptools
 #
 
-mydir=`dirname $0`
-mydir=`cd $mydir/../..;pwd`
+[ "$DEBUG" = "" ] || set -x
 
-WORKSPACE=${WORKSPACE:-$mydir}
-artifacts=${WORKSPACE}/logs
-mkdir -p ${artifacts}
+mydir=`dirname $0`
+srcdir=`cd $mydir/../..;pwd`
+
+WORKSPACE=${WORKSPACE:-$srcdir}
+LOGS=${LOGS:-${WORKSPACE}/logs}
+mkdir -p ${LOGS}
+rm -rf ${LOGS}/*
 
 . /sw/st/gnu_compil/gnu/scripts/pre-all-paths.sh
 
-cleanup() { rm -f $tmp_file; }
-
-declare -i nfail=0
-declare -i nskip=0
-error() { echo $0: ERROR: $* >&2; exit 1; }
-check() {
-    local -i return=$1
-    local -i res
-    shift
-    echo -n "Test: $* ..."
-    if [ "$VERBOSE" != "" ]; then
-    $*
-    else
-	$* >/dev/null 2>&1
-    fi
-    res=$?
-    if [ $res != $return ]; then
-	echo "FAILED: returned $res, expected $return"
-	nfail=`expr $nfail + 1`
-    else
-	echo "ok."
-    fi
-}
-
-check_not() {
-    local -i return=$1
-    local -i res
-    shift
-    echo -n "Test: $* ..."
-    if [ "$VERBOSE" != "" ]; then
-        $*
-    else
-        $* >/dev/null 2>&1
-    fi
-    res=$?
-    if [ $res = $return ]; then
-	echo "FAILED: returned $res, expected $return"
-	nfail=`expr $nfail + 1`
-    else
-	echo "ok."
-    fi
-}
-
-msg_check() {
-    local -i return=$1
-    local msg="$2"
-    local -i res
-    shift
-    shift
-    echo -n "Test: $* ..."
-    $* >$tmp_file 2>&1
-    res=$?
-    if [ $res != $return ]; then
-	echo "FAILED: returned $res, expected $return"
-	nfail=`expr $nfail + 1`
-    else
-	if [ "`grep \"$msg\" $tmp_file`" = "" ]; then
-	    echo "FAILED: expected \"$msg\" in output missing. Got:"
-	    cat $tmp_file
-	    nfail=`expr $nfail + 1`
-	else 
-	    echo "ok."
-	fi
-    fi
-}
+cleanup() { local status=$?; rm -f $tmp_file; exit $status; }
 
 tmp_file=/tmp/test_deptools_tmp_$$
-trap "cleanup" 0 1 2 15
+trap "cleanup" INT QUIT TERM EXIT
 
-echo "Something has to be done here" > ${artifacts}/test_report.log
-cd ${mydir}
-make check >>  ${artifacts}/test_report.log
-exit 0
+echo "Running make check" > ${LOGS}/test_report.log
+cd ${srcdir}
+make check >>  ${LOGS}/test_report.log

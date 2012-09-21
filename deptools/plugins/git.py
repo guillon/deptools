@@ -113,42 +113,43 @@ class GitManager(SourceManager):
         return self.name_
 
     def execute(self, args):
-        if self.config.verbose:
-            print "Execute " + self.basename
+        print "Executing command for component in '" + self.basename + "'"
         self._subcmd(args)
 
     def extract(self, args = []):
-        if self.config.verbose:
-            print "Clone " + self.basename
         if not os.path.exists(self.basename):
+            print "Extracting component in '" + self.basename + "'"
             try:
                 self._cmd([self.config.git, 'clone', '-b', self.label, self.repos, self.basename])
                 self._subcmd([self.config.git, 'reset', '--hard', self.remote_rev])
             except Exception, e:
                 raise Exception, "cannot clone component: " + str(e)
         else:
-            print "Skipping extraction of existing '" + self.basename + "'"
+            print "Skipping extraction of component in '" + self.basename + "'"
 
     def update(self, args = []):
-        if self.config.verbose:
-            print "Update " + self.basename
+        print "Updating component in '" + self.basename + "'"
         try:
             self._subcmd([self.config.git, 'fetch', 'origin'])
-            self._subcmd([self.config.git, 'merge', 'origin/' + self.label])
+            self._subcmd([self.config.git, 'merge', '--ff-only', self.remote_rev])
         except Exception, e:
             raise Exception, "cannot update component: " + str(e)
 
+    def extract_or_updt(self, args = []):
+        if not os.path.exists(self.basename):
+            self.extract(args)
+        else:
+            self.update(args)
+
     def commit(self, args = []):
-        if self.config.verbose:
-            print "Commit " + self.basename
+        print "Commiting component in '" + self.basename + "'"
         try:
             self._subcmd([self.config.git, 'commit' ] + args)
         except Exception, e:
             raise Exception, "cannot commit component: " + str(e)
 
     def rebase(self, args = []):
-        if self.config.verbose:
-            print "Rebase " + self.basename
+        print "Rebasing component in '" + self.basename + "'"
         try:
             self._subcmd([self.config.git, 'fetch', 'origin'])
             self._subcmd([self.config.git, 'rebase', 'origin/' + self.label])
@@ -156,8 +157,7 @@ class GitManager(SourceManager):
             raise Exception, "cannot rebase component: " + str(e)
 
     def deliver(self, args = []):
-        if self.config.verbose:
-            print "Deliver " + self.basename
+        print "Delivering component in '" + self.basename + "'"
         try:
             self._subcmd([self.config.git, 'push', 'origin', self.label])
         except Exception, e:
@@ -259,6 +259,7 @@ class GitManagerCmdLine:
             self._restore_session()
             dispatch = { 'execute': self._manager.execute,
                          'extract': self._manager.extract,
+                         'extract_or_updt': self._manager.extract_or_updt,
                          'update': self._manager.update,
                          'commit': self._manager.commit,
                          'rebase': self._manager.rebase,

@@ -86,33 +86,44 @@ $TEST ${tmpbase}.1.ser dump_actual
 $TEST ${tmpbase}.1.ser dump_head
 $TEST ${tmpbase}.1.ser update
 $TEST ${tmpbase}.1.ser execute touch bfile
+$TEST ${tmpbase}.1.ser extract_or_updt
 $TEST ${tmpbase}.1.ser execute git add bfile
 $TEST ${tmpbase}.1.ser commit -m 'Added empty bfile'
+$TEST ${tmpbase}.1.ser extract_or_updt
 $TEST ${tmpbase}.1.ser rebase
 $TEST ${tmpbase}.1.ser deliver
 $TEST ${tmpbase}.1.ser execute touch cfile
 $TEST ${tmpbase}.1.ser execute git add cfile
 $TEST ${tmpbase}.1.ser commit -m 'Added empty cfile'
+$TEST ${tmpbase}.1.ser execute rm afile
+$TEST ${tmpbase}.1.ser extract_or_updt
+
 
 # Add a new file in the work repository
 cd ${tmpbase}.1.work
+echo "a file version 2" >afile
 echo "d file" >dfile
 git add dfile
-git commit -m 'Added dfile'
+git commit -am 'Added dfile and modified afile'
 git fetch origin
 git rebase origin/master
 git push origin master
 cd ..
 
 # A second deptools session
-$TEST ${tmpbase}.1.ser rebase
+$TEST ${tmpbase}.1.ser extract_or_updt && exit 1 # should fail with conflict on afile
+$TEST ${tmpbase}.1.ser rebase && exit 1 # should fail with conflict on afile
+$TEST ${tmpbase}.1.ser execute git reset  --hard
+$TEST ${tmpbase}.1.ser extract_or_updt && exit 1 # should fail because needs rebase/merge
+$TEST ${tmpbase}.1.ser rebase 
 $TEST ${tmpbase}.1.ser deliver
 $TEST ${tmpbase}.1.ser list
+$TEST ${tmpbase}.1.ser dump_actual
 
 # Now checks that the repository is ok
 git clone ${tmpbase}.1.git ${tmpbase}.final
 cd ${tmpbase}.final
-[ -f afile -a  "`cat afile`" = "a file" ] || error "missing afile"
+[ -f afile -a  "`cat afile`" = "a file version 2" ] || error "missing afile"
 [ -f bfile -a "`cat bfile`" = "" ] || error "missing bfile"
 [ -f cfile -a "`cat cfile`" = "" ] || error "missing cfile"
 [ -f dfile -a "`cat dfile`" = "d file" ] || error "missing dfile"

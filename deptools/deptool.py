@@ -92,23 +92,29 @@ class Dependency:
         deps.load(stream)
         self.deps = deps.content
         
-    def dump(self):
+    def dump(self, component_names=[]):
         DependencyFile(self.deps).dump()
 
-    def dump_actual(self):
+    def dump_actual(self, component_names=[]):
+        if component_names == []:
+            component_names = self.deps['configurations'][self.config.configuration]
         deps_actual = copy.deepcopy(self.deps)
         for component in self.components:
             name = component.name()
-            actual = component.get_actual_revision()
-            deps_actual['repositories'][name]['revision'] = actual
+            if name in component_names:
+                actual = component.get_actual_revision()
+                deps_actual['repositories'][name]['revision'] = actual
         DependencyFile(deps_actual).dump()
 
-    def dump_head(self):
+    def dump_head(self, component_names=[]):
+        if component_names == []:
+            component_names = self.deps['configurations'][self.config.configuration]
         deps_head = copy.deepcopy(self.deps)
         for component in self.components:
             name = component.name()
-            head = component.get_head_revision()
-            deps_head['repositories'][name]['revision'] = head
+            if name in component_names:
+                head = component.get_head_revision()
+                deps_head['repositories'][name]['revision'] = head
         DependencyFile(deps_head).dump()
 
     def prepare(self):
@@ -160,11 +166,11 @@ class Dependency:
 
     def exec_cmd(self, command, args=[]):
         if command == "dump":
-            self.dump()
+            self.dump(args)
         elif command == "dump_actual":
-            self.dump_actual()
+            self.dump_actual(args)
         elif command == "dump_head":
-            self.dump_head()
+            self.dump_head(args)
         else:
             self.foreach(command, args)
 

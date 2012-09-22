@@ -41,7 +41,7 @@ dir=`dirname $0`
 dir=`cd $dir; pwd`
 TEST="env PYTHONPATH=$dir/.. python $dir/tar.py"
 
-tmpdir=`mktemp -d`
+tmpdir=`mktemp -d -t tmp.XXXXXX`
 tmpbase=`basename $0 .sh`.tmp
 
 echo "Working dir: $tmpdir"

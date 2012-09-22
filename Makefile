@@ -33,7 +33,7 @@
 #  Actually each project should copy the dependencies script on it's top level directory.
 #
 
-PREFIX=/usr/local
+PREFIX?=/usr/local
 DEPTOOL_REPO=http://github.com/guillon/deptools.git
 DEPTOOL_REV=origin/master
 SCRIPTS=dependencies
@@ -43,15 +43,18 @@ all: $(SCRIPTS)
 $(SCRIPTS): Makefile
 
 $(SCRIPTS): %: %.in
-	cp $< $@ && chmod 755 $@ && sed -e 's|@DEPTOOL_REPO@|$(DEPTOOL_REPO)|g' -e 's|@DEPTOOL_REV@|$(DEPTOOL_REV)|g' -i $@
+	(sed -e 's|@DEPTOOL_REPO@|$(DEPTOOL_REPO)|g' -e 's|@DEPTOOL_REV@|$(DEPTOOL_REV)|g' $< > $@ && chmod 755 $@) || rm -f $@
 
 clean:
 	rm -f $(SCRIPTS)
 
 distclean: clean
 
-install:
-	install -D -m 755 $(SCRIPTS) $(PREFIX)/
+install: | $(PREFIX)
+	install -m 755 $(SCRIPTS) $(PREFIX)/
+
+$(PREFIX):
+	install -d $(PREFIX)
 
 check: check-tests check-examples
 
@@ -60,3 +63,5 @@ check-tests: all
 
 check-examples: all
 	examples/run_all_examples.sh
+
+.PHONY: all clean distclean install check check-tests check-examples

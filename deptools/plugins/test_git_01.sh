@@ -49,7 +49,7 @@ cwd=$tmpdir
 git --version || error "git: command not found. Git must be installed for the git plugin to work"
 
 # Be sure we are not in a git repository while performing this test
-git log -n1 >/dev/null 2>&1 && \
+git rev-parse --git-dir >/dev/null 2>&1 && \
     echo "error: this script must not run in a git repository" && exit 1
 
 # Clean from previous runs

@@ -139,40 +139,27 @@ class Dependency:
 
     def foreach(self, command, args=[]):
         for component in self.components:
-            if command == "execute":
-                component.execute(args)
-            elif command == "extract":
-                component.extract(args)
-            elif command == "extract_or_updt":
-                component.extract_or_updt(args)
-            elif command == "update":
-                component.update(args)
-            elif command == "commit":
-                component.commit(args)
-            elif command == "rebase":
-                component.rebase(args)
-            elif command == "deliver":
-                component.deliver(args)
-            elif command == "dump":
-                component.dump(args)
-            elif command == "dump_actual":
-                component.dump_actual(args)
-            elif command == "dump_head":
-                component.dump_head(args)
-            elif command == "list":
-                component.list(args)
-            else:
-                error("unexpected command! " + command)
+            method = None
+            try:
+                method = eval("component." + command)
+            except AttributeError:
+                print("Skipped component " + component.name() + ": does not implement " + command)
+            if method != None: method(args)
 
     def exec_cmd(self, command, args=[]):
+        command_list = [ 'execute', 'extract', 'extract_or_updt',
+                         'update', 'commit', 'rebase', 'deliver',
+                         'dump', 'dump_actual', 'dump_head', 'list' ]
         if command == "dump":
             self.dump(args)
         elif command == "dump_actual":
             self.dump_actual(args)
         elif command == "dump_head":
             self.dump_head(args)
-        else:
+        elif command in command_list:
             self.foreach(command, args)
+        else:
+            error("unexpected command: " + command)
 
 def print_error(msg):
   print "error: " +  msg
@@ -202,7 +189,8 @@ def usage(config):
   print " update: update all dependencies"
   print " extract_or_updt: extract all dependencies or update if already existing"
   print " commit: commit all dependencies"
-  print " freeze: freeze all dependencies revisions"
+  print " rebase: rebase changes on top of upstream"
+  print " deliver: push changes upstream"
   print " execute: execute command for all dependencies"
   print " dump: dumps to stdout the dependencies"
   print " dump_actual: dumps to stdout the dependencies with actual revisions"

@@ -358,6 +358,14 @@ class TarManager(SourceManager):
             print "Update " + self.basename
         print "Update " + self.basename + ": nothing to do for archive"
 
+    def extract_or_updt(self, args = []):
+        if self.config.verbose:
+            print "Extract or update " + self.basename
+        if not os.path.exists(self.basename):
+            self.extract(args)
+        else:
+            self.update(args)
+
     def commit(self, args = []):
         if self.config.verbose:
             print "Commit " + self.basename

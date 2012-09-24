@@ -122,12 +122,12 @@ class SvnManager(SourceManager):
     def rebase(self, args = []):
         if self.config.verbose:
             print "Rebase " + self.basename
-        raise Exception, "avn format does not support rebase in subdir " + self.basename
+        raise Exception, "svn format does not support rebase in subdir " + self.basename
 
     def deliver(self, args = []):
         if self.config.verbose:
             print "Deliver " + self.basename
-        raise Exception, "avn format does not support deliver in subdir " + self.basename
+        raise Exception, "svn format does not support deliver in subdir " + self.basename
 
     def dump(self, args = []):
         if self.config.verbose:

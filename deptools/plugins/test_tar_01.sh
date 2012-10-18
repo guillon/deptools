@@ -98,12 +98,18 @@ EOF
 # A deptools session
 $TEST ${tmpbase}.2.ser new ${tmpbase}.2.dep
 $TEST ${tmpbase}.2.ser extract 
-$TEST ${tmpbase}.2.ser extract # second extract should be ok
+$TEST ${tmpbase}.2.ser extract_or_updt
 $TEST ${tmpbase}.2.ser dump_actual
 $TEST ${tmpbase}.2.ser dump_head
 $TEST ${tmpbase}.2.ser dump
 $TEST ${tmpbase}.2.ser list
 $TEST ${tmpbase}.2.ser execute cat bfile
+
+# No op operations
+$TEST ${tmpbase}.2.ser update
+$TEST ${tmpbase}.2.ser commit
+$TEST ${tmpbase}.2.ser rebase
+$TEST ${tmpbase}.2.ser deliver
 
 # Notify success
 echo SUCCESS

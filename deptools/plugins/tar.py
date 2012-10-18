@@ -477,6 +477,7 @@ class TarManagerCmdLine:
             self._restore_session()
             dispatch = { 'execute': self._manager.execute,
                          'extract': self._manager.extract,
+                         'extract_or_updt': self._manager.extract_or_updt,
                          'update': self._manager.update,
                          'commit': self._manager.commit,
                          'rebase': self._manager.rebase,

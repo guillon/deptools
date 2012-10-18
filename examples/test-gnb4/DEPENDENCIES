@@ -1,0 +1,15 @@
+configurations:
+  default:
+   - devimage-newlib-arm
+   - jsonpath
+
+repositories:
+  devimage-newlib-arm:
+    format: path
+    repos: file:///home/compwork/projects/open64-arm/devimage-newlib-arm-20100517
+    revision: 5ad703aa2830cccd79e19690971d399314dc6514
+  jsonpath:
+    format: path
+    repos: /home/compwork/projects/atos/jsonpath-0.53.tar.gz
+    revision: 3e3c975036ea2be62f93e1785246fa9e15f72de9
+    digest_content: true

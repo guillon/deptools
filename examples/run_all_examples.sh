@@ -11,7 +11,7 @@ set -e
 # Add domain independent tests in test_any.
 # Domain dependent tests in test_$domain
 test_any="hello-cz deptools-all"
-test_gnb="test-gnb1 test-gnb2 test-gnb3"
+test_gnb="test-gnb1 test-gnb2 test-gnb3 test-gnb4"
 
 dir=`dirname $0`
 host=`hostname`

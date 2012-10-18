@@ -27,20 +27,13 @@
 #
 
 import os, sys
-def check_python_version_():
-    try:
-        assert sys.hexversion >= 0x02040000
-    except:
-        print >>sys.stderr, 'deptools: warning: python version >= 2.4 is required'
-        sys.exit(1)
-check_python_version_()  
-
 import getopt, copy
 
 # non standard package, use local version
 import yaml
 
 # SourceManagers
+from core import UserException
 from plugins import SourceManager 
 from plugins import PluginLoader
 
@@ -87,7 +80,11 @@ class Dependency:
         if self.config.dep_file == "-":
             stream = sys.stdin
         else:
-            stream = file(self.config.dep_file)
+            try:
+                stream = file(self.config.dep_file)
+            except IOError, e:
+                raise UserException("cannot access dependencies file %s: %s" % \
+                                        (self.config.dep_file, e.strerror))
         deps =  DependencyFile()
         deps.load(stream)
         self.deps = deps.content
@@ -159,22 +156,10 @@ class Dependency:
         elif command in command_list:
             self.foreach(command, args)
         else:
-            error("unexpected command: " + command)
+            raise UserException("unexpected command: %s" % command)
 
 def print_error(msg):
-  print "error: " +  msg
-
-def error(msg):
-  print_error(msg)
-  sys.exit(1)
-
-def usage(config):
-  print "usage: " + sys.argv[0] + " [options...] [cmd...]"
-  print
-
-
-def print_error(msg):
-  print os.path.basename(sys.argv[0]) + ": error: " + msg
+  print >>sys.stderr, "%s: error: %s" % (os.path.basename(sys.argv[0]), msg)
 
 def error(msg):
   print_error(msg)
@@ -219,15 +204,18 @@ def main():
             usage(def_config)
             sys.exit(0)
         elif o in ("-v", "--version"):
-            print "deptool.py version " + version
+            print "%s version %s" % (os.path.basename(sys.argv[0]), version)
             sys.exit(0)
     config.parse_options(opts, args)
     if not config.check():
         sys.exit(2)
     if len(args) == 0:
         error("missing command, try --help for usage")
-    dependency = Dependency(config)
-    dependency.exec_cmd(args[0], args[1:])
+    try:
+        dependency = Dependency(config)
+        dependency.exec_cmd(args[0], args[1:])
+    except UserException, e:
+        error(str(e))
 
 if __name__ == "__main__":
   main()

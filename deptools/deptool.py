@@ -60,11 +60,44 @@ class Config:
         return True
 
 
+class Check:
+    @staticmethod
+    def check(v, check_function):
+        if isinstance(v, list):
+            Check.check_list(v, check_function)
+        elif isinstance(v, dict):
+            Check.check_dict(v, check_function)
+        else:
+            check_function(v)
+
+    @staticmethod
+    def check_dict(d, check_function):
+        for k, v in d.items():
+            Check.check(v, check_function)
+
+    @staticmethod
+    def check_dict_values(d, check_function):
+        for _, v in d.items():
+            check_function(k)
+            Check.check(v, check_function)
+
+    @staticmethod
+    def check_dict_keys(d, check_function):
+        for k in d:
+            check_function(k)
+
+    @staticmethod
+    def check_list(l, check_function):
+        for v in l:
+            Check.check(v, check_function)
+
 class DependencyFile:
     def __init__(self, content = None):
         self.content = content
+
     def dump(self, ostream = sys.stdout):
         print >>ostream, yaml.dump(self.content)
+
     def load(self, istream = sys.stdin):
         self.content = yaml.load(istream)
 
@@ -115,15 +148,21 @@ class Dependency:
         DependencyFile(deps_head).dump()
 
     def prepare(self):
+        def assert_string(v, msg=""):
+            if not isinstance(v, (str, unicode)):
+                raise UserException(
+                    "%svalue is not a string, please use quotes: %s" % (msg, str(v)))
         configurations = self.deps.get("configurations")
         if configurations == None or type(configurations) != type({}):
             raise Exception, "Missing configurations map in dependency file: " + self.config.dep_file
+        Check.check(configurations, lambda x: assert_string(x, "in configurations: "))
         components = configurations.get(self.config.configuration)
         if components == None or type(components) != type([]):
             raise Exception, "Missing components list specification for configuration: " + self.config.configuration
         repositories = self.deps.get("repositories")
         if repositories == None or type(repositories) != type({}):
             raise Exception, "Missing repositories map in dependency file: " + self.config.dep_file
+        Check.check_dict_keys(repositories, lambda x: assert_string(x, "in repositories names: "))
         self.components = []
         for component in components:
             repository = repositories.get(component)

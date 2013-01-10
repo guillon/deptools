@@ -28,6 +28,6 @@ forge_remote_parameter() {
     [ "$gerrit_user" != "" ] && gerrit_user="$gerrit_user@"
     local default_repos="${protocol}://${gerrit_user}${default}"
     git remote show "$remote" >/dev/null 2>&1 || remote="$default_repos"
-    echo "$default_repos"
+    echo "$remote"
 }
 

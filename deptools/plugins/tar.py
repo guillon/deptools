@@ -68,6 +68,7 @@ class TarConfig:
         self.curl = 'curl'
         self.scp = 'scp'
         self.sha1sum = 'sha1sum'
+        self.unzip = 'unzip'
         self.verbose = 0
 
 class URI:

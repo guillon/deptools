@@ -58,7 +58,9 @@ class SvnManager(SourceManager):
             self.basename = os.path.basename(self.component['repos'])
         self.branch = component['label']
         if self.branch != "trunk":
-            self.branch = "branches/" + self.branch
+            if not self.branch.startswith("tags/"):
+                if not self.branch.startswith("branches/"):
+                    self.branch = "branches/" + self.branch
         self.cwd = os.getcwd()
 
     def _cmd(self, args):

@@ -27,8 +27,9 @@
 
 from subprocess import call
 from subprocess import check_call
+from subprocess import Popen, PIPE
 from plugins import SourceManager
-import os, sys
+import os, sys, re
 import yaml
 
 verbose = 0
@@ -67,14 +68,27 @@ class SvnManager(SourceManager):
         if self.config.verbose:
             print " ".join(args)
         check_call(args)
-    
+
+    def _cmd_output(self, args):
+        if self.config.verbose:
+            print " ".join(args)
+        return Popen(args, stdout=PIPE).communicate()[0]
+
     def _subcmd(self, args):
         if not os.path.exists(self.basename):
             raise Exception, "path does not exist: " + self.basename
         os.chdir(self.basename)
         self._cmd(args)
         os.chdir(self.cwd)
-        
+
+    def _subcmd_output(self, args):
+        if not os.path.exists(self.basename):
+            raise Exception, "path does not exist: " + self.basename
+        os.chdir(self.basename)
+        output = self._cmd_output(args)
+        os.chdir(self.cwd)
+        return output
+
     def name(self):
         return self.name_
 
@@ -138,11 +152,15 @@ class SvnManager(SourceManager):
 
     def get_actual_revision(self):
         try:
-            self._subcmd([self.config.svn, 'update'])
-            self._subcmd([self.config.svn, 'info', '-r', 'HEAD'])
+            self._subcmd_output([self.config.svn, 'update'])
+            revision_str = self._subcmd_output(
+                [self.config.svn, 'info', '-r', 'HEAD'])
+            revision_obj = re.search(
+                '^Revision: ([0-9]*)$', revision_str, re.MULTILINE)
+            revision = revision_obj.group(1)
         except Exception, e:
             raise Exception, "cannot get actual revision: " + str(e)
-        return "TODO"
+        return revision
 
     def get_head_revision(self):
         return "HEAD"

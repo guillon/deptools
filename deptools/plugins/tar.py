@@ -66,6 +66,7 @@ class TarConfig:
     def __init__(self):
         self.tar = 'tar'
         self.curl = 'curl'
+        self.curl_options = [ '-L', '--retry', '3' ]
         self.scp = 'scp'
         self.sha1sum = 'sha1sum'
         self.verbose = 0
@@ -293,7 +294,8 @@ class TarManager(SourceManager):
             if self.scheme == URI._scheme.SSH:
                 self._cmd([self.config.scp, self.remote + ":" + self.path, self._get_cached_file()])
             else:
-                self._cmd([self.config.curl, "-o", self._get_cached_file(), self.uri])
+                self._cmd([self.config.curl] + self.config.curl_options +
+                          [ "-o", self._get_cached_file(), self.uri])
         except Exception, e:
             raise Exception("cannot acces remote URI: " + self.repos + ": " + str(e))
 

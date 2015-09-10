@@ -22,12 +22,19 @@ forge_reviewer_options() {
 # Echoes the result parameter.
 forge_remote_parameter() {
     local remote="${1?}"
-    local protocol="${2?}"
-    local default="${3?}"
-    local gerrit_user=`git config gerrit.name`
-    [ "$gerrit_user" != "" ] && gerrit_user="$gerrit_user@"
-    local default_repos="${protocol}://${gerrit_user}${default}"
-    git remote show "$remote" >/dev/null 2>&1 || remote="$default_repos"
+    local default="${2?}"
+    git remote show "$remote" >/dev/null 2>&1 || remote="$default"
     echo "$remote"
 }
 
+# Query the gerrit server
+# First argument is the server address
+# Second argument is the query
+# Echoes query result
+gerrit_query() {
+    local server=${1?} # ssh://gerrit.st.com:29418
+    local query=${2?}
+    local server_name=$(echo ${server} | sed 's/[^:]*:\/\/\([^:]*\).*/\1/')
+    local server_port=$(echo ${server} | sed 's/.*:\([0-9]*\)/\1/')
+    ssh -n -p ${server_port} ${server_name} gerrit query ${query}
+}

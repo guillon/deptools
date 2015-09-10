@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+#
+# Usage: update-tracker [server] [ref]
+#
+# Update codex tracker with gerrit code-review url.
+#
+# The update is performed if:
+# - the Change-Id of the commit is set
+# - A Codex-Id can be found in the commit message
+#   (Accepted forms: Codex-Id, Fix-Codex-Id, Task-Codex-Id,
+#    Partial-Fix-Codex-Id, Partial-Task-Codex-Id)
+# - The gerrit url is not already in the tracker comments
+
+set -e
+
+gerrit_dir=$(dirname $(readlink -f $0))
+codex_dir=$(cd ${gerrit_dir}/../codex; pwd)
+
+source ${gerrit_dir}/common.sh
+
+server=${1?}
+ref=${2:-HEAD}
+
+# get change-id from commit message
+change_id=$(git show -s ${ref} | grep "Change-Id:" | awk '{ print $2 }')
+echo "# CHANGE_ID ${change_id}"
+[ "${change_id}" != "" ]
+
+# get gerrit review url by querying gerrit server
+gerrit_url=$(gerrit_query $server $change_id | grep "url:" | awk '{ print $2 }')
+echo "# REVIEW_URL ${gerrit_url}"
+[ "${gerrit_url}" != "" ]
+
+# get codex artifact ids referenced in commit message
+codex_ids=$(git show -s ${ref} \
+    | grep -w " \(Partial-\)\?\(Task-\|Fix-\)\?Codex-Id:" \
+    | sed 's/.*://' | sed 's/,//g' | sort -u)
+
+# add gerrit_url in codex artifacts comments if needed
+for codex_id in ${codex_ids}; do
+    echo "# CODEX_ID ${codex_id}"
+    task_comments=$(${codex_dir}/codex_manage_comment.py ${codex_id})
+    url_in_comments=$(echo "${task_comments}" | grep "${gerrit_url}" | wc -l)
+    # skip if gerrit_url already in artifact comments
+    [ "${url_in_comments}" -ne 0 ] && continue
+    echo "# -> ADD REVIEW URL"
+    ${codex_dir}/codex_manage_comment.py ${codex_id} "code-review url: ${gerrit_url}"
+done

@@ -27,14 +27,14 @@
 #
 
 import os, sys
-import getopt, copy
+import argparse, copy
 
 # non standard package, use local version
 import yaml
 
 # SourceManagers
 from core import UserException
-from plugins import SourceManager 
+from plugins import SourceManager
 from plugins import PluginLoader
 
 version = "0.0.1"
@@ -49,12 +49,9 @@ class Config:
         self.dep_file = params.dep_file
         self.configuration = params.configuration
 
-    def parse_options(self, opts, args):
-        for o, a in opts:
-            if o in ("-f", "--file"):
-                self.dep_file = a
-            if o in ("-c", "--config"):
-                self.configuration = a
+    def handle_options(self, opts, args):
+        self.dep_file = opts.dep_file
+        self.configuration = opts.configuration
 
     def check(self):
         return True
@@ -121,7 +118,7 @@ class Dependency:
         deps =  DependencyFile()
         deps.load(stream)
         self.deps = deps.content
-        
+
     def dump(self, component_names=[]):
         DependencyFile(self.deps).dump()
 
@@ -228,24 +225,27 @@ def usage(config):
   print " -h[--help : this help page"
 
 def main():
-    pdir = os.path.dirname(sys.argv[0])        
-    pdir = os.path.abspath(pdir) 
+    pdir = os.path.dirname(sys.argv[0])
+    pdir = os.path.abspath(pdir)
     def_config = DefaultConfig()
     config = Config(def_config)
-    try:
-        opts, args = getopt.gnu_getopt(sys.argv[1:], "f:c:qvh", ["file=", "config=", "quiet", "version", "help"])
-    except getopt.GetoptError, err:
-        print_error(str(err))
+
+    parser = argparse.ArgumentParser(add_help=False)
+    parser.add_argument('-f', '--file', dest='dep_file', default=def_config.dep_file)
+    parser.add_argument('-c', '--config', dest='configuration', default=def_config.configuration)
+    parser.add_argument('-q', '--quiet', action='store_true')
+    parser.add_argument('-v', '--version', action='store_true')
+    parser.add_argument('-h', '--help', action='store_true')
+
+    opts, args = parser.parse_known_args()
+    if opts.help:
         usage(def_config)
-        sys.exit(2)
-    for o, a in opts:
-        if o in ("-h", "--help"):
-            usage(def_config)
-            sys.exit(0)
-        elif o in ("-v", "--version"):
-            print "%s version %s" % (os.path.basename(sys.argv[0]), version)
-            sys.exit(0)
-    config.parse_options(opts, args)
+        sys.exit(0)
+    if opts.version:
+        print "%s version %s" % (os.path.basename(sys.argv[0]), version)
+        sys.exit(0)
+    config.handle_options(opts, args)
+
     if not config.check():
         sys.exit(2)
     if len(args) == 0:

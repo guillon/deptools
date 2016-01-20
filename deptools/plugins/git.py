@@ -27,7 +27,7 @@
 
 from subprocess import call, check_call, Popen, PIPE
 from plugins import SourceManager
-import os, sys, hashlib
+import os, sys, hashlib, shutil
 import yaml
 
 verbose = 0
@@ -143,6 +143,9 @@ class GitManager(SourceManager):
         self._subcmd(args)
 
     def extract(self, args = []):
+        if os.path.exists(self.basename) and "--force" in args:
+            print "Removing directory '" + self.basename + "'"
+            shutil.rmtree(self.basename)
         if not os.path.exists(self.basename):
             print "Extracting component in '" + self.basename + "'"
             try:

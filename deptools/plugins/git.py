@@ -127,11 +127,11 @@ class GitManager(SourceManager):
         if not os.path.exists(cached_repo):
             os.makedirs(cached_repo)
             _git_cached(['init', '--bare'])
-            _git_cached(['config', '--local', 'remote.origin.url',
+            _git_cached(['config', 'remote.origin.url',
                          self.repos])
-            _git_cached(['config', '--local', '--add', 'remote.origin.fetch',
+            _git_cached(['config', '--add', 'remote.origin.fetch',
                          '+refs/heads/*:refs/heads/*'])
-            _git_cached(['config', '--local', '--add', 'remote.origin.fetch',
+            _git_cached(['config', '--add', 'remote.origin.fetch',
                          '+refs/tags/*:refs/tags/*'])
         _git_cached(['fetch', 'origin', '--prune'])
 

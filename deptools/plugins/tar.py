@@ -66,7 +66,7 @@ class TarConfig:
     def __init__(self):
         self.tar = 'tar'
         self.curl = 'curl'
-        self.curl_options = [ '-L', '--retry', '3' ]
+        self.curl_options = [ '-k', '-L', '--retry', '3' ]
         self.scp = 'scp'
         self.sha1sum = 'sha1sum'
         self.verbose = 0

@@ -65,6 +65,7 @@ verbose = 0
 class TarConfig:
     def __init__(self):
         self.tar = 'tar'
+        self.unzip = 'unzip'
         self.curl = 'curl'
         self.curl_options = [ '-k', '-L', '--retry', '3' ]
         self.scp = 'scp'

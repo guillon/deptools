@@ -1,0 +1,47 @@
+#!/usr/bin/env python
+
+import sys, re
+
+commit_msg = sys.stdin.read()
+
+
+#
+# Message format
+#
+#   https://git-scm.com/book/ch5-2.html#Commit-Guidelines
+
+commit_msg_lines = commit_msg.splitlines()
+
+# # disabled for now - may be too strict
+# if len(commit_msg_lines[0]) > 50:
+#    print "warning: First line of commit message should not exceed 50 chars"
+
+if max(map(len, commit_msg_lines)) > 72:
+    print "warning: Lines of commit message should not exceed 72 chars"
+
+
+#
+# Change-Id
+#
+#   To be picked up by Gerrit, a Change-Id line must be in the footer
+#   (last paragraph) of a commit message
+#   https://gerrit.st.com/Documentation/user-changeid.html
+
+commit_msg_footer = re.split(
+    '\n\s*\n', commit_msg.rstrip())[-1]
+change_ids = re.findall(
+    '^Change-Id: \S*$', commit_msg, re.MULTILINE)
+change_ids_footer = re.findall(
+    '^Change-Id: \S*$', commit_msg_footer, re.MULTILINE)
+
+if not change_ids:
+    print "error: Change-Id line not found in the commit message"
+    exit(1)
+
+if len(change_ids) > 1:
+    print "error: More than one Change-Id line found in the commit message"
+    exit(1)
+
+if not change_ids_footer:
+    print "error: Change-Id line is not in the footer of the commit message"
+    exit(1)

@@ -68,13 +68,21 @@ to a new revision implies also a new revision for the project. Indeed, the
 `DEPENDENCIES` file has to be updated and commited. In this case the `DEPENDENCIES`
 files acts as an always up-to-date manifest.
 
-# Features
+# Usage
 
 The supported repositories formats are implemented as plugins to deptools:
 * git: git repository
 * svn: subversion repositories
 * tar: archive files
 * hg: mercurial (to be tested)
+
+A ./.deptools directory at the point of extraction may be created for caching
+fetched objects or for temporary usage. Note that it may hold an important
+part of the disk space depending on the repository format.
+
+Also, if using the dependencies bootstrap script referenced above, the
+deptools tool itself will be extracted in the ./deptools directory which
+it thus also reserved in this case.
 
 The actions that can be run on each component are for instance:
 * extract: extract components from their respective repositories

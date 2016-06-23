@@ -1,0 +1,37 @@
+#!/bin/sh
+
+header="\
+# Codex-Id:
+# Fix-Codex-Id:
+# Task-Codex-Id:
+# Refs: https://codex.cro.st.com/plugins/tracker/?aid=
+"
+
+# Do nothing if message is already finalized (cherry-pick, commit -m, ...)
+case "$2" in
+    message)
+        exit 0
+        ;;
+    template|merge|squash|commit|*)
+        ;;
+esac
+
+# Handle case of no '#' in proposed commit message
+if [ `cat $1 | grep "^#" | wc -l` -eq 0 ]; then
+    echo "\n$header" >> $1
+    exit 0
+fi
+
+# Add the header before the first line starting with '#'
+# Ignore output and exit status
+(
+ed $1 << END
+/^#/
+i
+`echo "$header"`
+
+.
+w
+q
+END
+) >/dev/null 2>&1 || true

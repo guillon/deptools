@@ -2,9 +2,8 @@
 # Default configuration for gerrit reviews.
 # Can be overriden by a local.sh file in the same directory.
 #
-protocol=ssh
-server=gnx5855.gnb.st.com:29418
-project=deptools
-branch=master
-reviewers="christophe.guillon@st.com thomas.thery@st.com laurent.alfonsi@st.com"
+server=ssh://gerrit.st.com:29418
 remote=gerrit
+project=ci-kb/deptools
+branch=master
+reviewers="guillon thomas.thery@st.com laurent.alfonsi@st.com"

@@ -27,14 +27,14 @@
 #
 
 import os, sys
-import getopt, copy
+import argparse, copy
 
 # non standard package, use local version
 import yaml
 
 # SourceManagers
 from core import UserException
-from plugins import SourceManager 
+from plugins import SourceManager
 from plugins import PluginLoader
 
 version = "0.0.1"
@@ -49,22 +49,52 @@ class Config:
         self.dep_file = params.dep_file
         self.configuration = params.configuration
 
-    def parse_options(self, opts, args):
-        for o, a in opts:
-            if o in ("-f", "--file"):
-                self.dep_file = a
-            if o in ("-c", "--config"):
-                self.configuration = a
+    def handle_options(self, opts, args):
+        self.dep_file = opts.dep_file
+        self.configuration = opts.configuration
 
     def check(self):
         return True
 
 
+class Check:
+    @staticmethod
+    def check(v, check_function):
+        if isinstance(v, list):
+            Check.check_list(v, check_function)
+        elif isinstance(v, dict):
+            Check.check_dict(v, check_function)
+        else:
+            check_function(v)
+
+    @staticmethod
+    def check_dict(d, check_function):
+        for k, v in d.items():
+            Check.check(v, check_function)
+
+    @staticmethod
+    def check_dict_values(d, check_function):
+        for _, v in d.items():
+            check_function(k)
+            Check.check(v, check_function)
+
+    @staticmethod
+    def check_dict_keys(d, check_function):
+        for k in d:
+            check_function(k)
+
+    @staticmethod
+    def check_list(l, check_function):
+        for v in l:
+            Check.check(v, check_function)
+
 class DependencyFile:
     def __init__(self, content = None):
         self.content = content
+
     def dump(self, ostream = sys.stdout):
         print >>ostream, yaml.dump(self.content)
+
     def load(self, istream = sys.stdin):
         self.content = yaml.load(istream)
 
@@ -88,7 +118,7 @@ class Dependency:
         deps =  DependencyFile()
         deps.load(stream)
         self.deps = deps.content
-        
+
     def dump(self, component_names=[]):
         DependencyFile(self.deps).dump()
 
@@ -115,15 +145,21 @@ class Dependency:
         DependencyFile(deps_head).dump()
 
     def prepare(self):
+        def assert_string(v, msg=""):
+            if not isinstance(v, (str, unicode)):
+                raise UserException(
+                    "%svalue is not a string, please use quotes: %s" % (msg, str(v)))
         configurations = self.deps.get("configurations")
         if configurations == None or type(configurations) != type({}):
             raise Exception, "Missing configurations map in dependency file: " + self.config.dep_file
+        Check.check(configurations, lambda x: assert_string(x, "in configurations: "))
         components = configurations.get(self.config.configuration)
         if components == None or type(components) != type([]):
             raise Exception, "Missing components list specification for configuration: " + self.config.configuration
         repositories = self.deps.get("repositories")
         if repositories == None or type(repositories) != type({}):
             raise Exception, "Missing repositories map in dependency file: " + self.config.dep_file
+        Check.check_dict_keys(repositories, lambda x: assert_string(x, "in repositories names: "))
         self.components = []
         for component in components:
             repository = repositories.get(component)
@@ -189,24 +225,27 @@ def usage(config):
   print " -h[--help : this help page"
 
 def main():
-    pdir = os.path.dirname(sys.argv[0])        
-    pdir = os.path.abspath(pdir) 
+    pdir = os.path.dirname(sys.argv[0])
+    pdir = os.path.abspath(pdir)
     def_config = DefaultConfig()
     config = Config(def_config)
-    try:
-        opts, args = getopt.gnu_getopt(sys.argv[1:], "f:c:qvh", ["file=", "config=", "quiet", "version", "help"])
-    except getopt.GetoptError, err:
-        print_error(str(err))
+
+    parser = argparse.ArgumentParser(add_help=False)
+    parser.add_argument('-f', '--file', dest='dep_file', default=def_config.dep_file)
+    parser.add_argument('-c', '--config', dest='configuration', default=def_config.configuration)
+    parser.add_argument('-q', '--quiet', action='store_true')
+    parser.add_argument('-v', '--version', action='store_true')
+    parser.add_argument('-h', '--help', action='store_true')
+
+    opts, args = parser.parse_known_args()
+    if opts.help:
         usage(def_config)
-        sys.exit(2)
-    for o, a in opts:
-        if o in ("-h", "--help"):
-            usage(def_config)
-            sys.exit(0)
-        elif o in ("-v", "--version"):
-            print "%s version %s" % (os.path.basename(sys.argv[0]), version)
-            sys.exit(0)
-    config.parse_options(opts, args)
+        sys.exit(0)
+    if opts.version:
+        print "%s version %s" % (os.path.basename(sys.argv[0]), version)
+        sys.exit(0)
+    config.handle_options(opts, args)
+
     if not config.check():
         sys.exit(2)
     if len(args) == 0:

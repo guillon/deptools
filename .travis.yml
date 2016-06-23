@@ -1,0 +1,17 @@
+language: python
+python:
+  - '2.6'
+  - '2.7'
+script:
+  - make all
+  - make DEBUG=1 check
+  - make install PREFIX=$PWD/deploy
+deploy:
+  provider: releases
+  api_key:
+    secure: nvSB0s+KATATr/+p0ZcQjpqu2RYj1wMef/xYffjwO5bsSXKdoD50tb5KglPiWsoSFGSZptX+g7Dwrt3JukQjDFdMvFVIrnPpfVHtrd3aS5cqqqcPcW1CpRibrbSUflKnIQbKThQD99KRkwAiESkzBhGizz9tUsjuyYW6Yed6RhM=
+  file: deploy/dependencies
+  on:
+    repo: guillon/deptools
+    tags: true
+    python: '2.6'

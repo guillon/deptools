@@ -3,6 +3,10 @@
 #
 # Copyright (c) 2009 Christophe Guillon <christophe.guillon.perso@gmail.com>
 #
+# The "with_metaclass" function in this module comes from the following source:
+# * Jinja2 (BSD licensed: see
+#           https://github.com/mitsuhiko/jinja2/blob/master/LICENSE)
+#
 # Permission is hereby granted, free of charge, to any person
 # obtaining a copy of this software and associated documentation
 # files (the "Software"), to deal in the Software without
@@ -49,7 +53,6 @@ class PluginMount(type):
             # Simply appending it to the list is all that's needed to keep
             # track of it later.
             cls.plugins.append(cls)
-            
 
     def get_plugin(cls, name):
         try:
@@ -59,9 +62,9 @@ class PluginMount(type):
                 if p.plugin_name_ == name:
                     cls.plugin_map[name] = p
                     return p
-            raise Exception, "Plugin not found: " + name
+            raise Exception("Plugin not found: " + name)
         return p
-    
+
 
 class PluginLoader:
     """ PluginLoader is a static class that loads all the availble
@@ -79,20 +82,53 @@ class PluginLoader:
             if file.endswith('.py'):
                 name = file.rsplit('.', 1)[0]
                 if verbose != 0:
-                    print "Loading plugin " + name
+                    print("Loading plugin " + name)
                 __import__(name)
 
 
-class SourceManager:
+def with_metaclass(meta, *bases):
+    """
+    Function from jinja2/_compat.py. License: BSD.
+
+    Use it like this::
+
+        class BaseForm(object):
+            pass
+
+        class FormType(type):
+            pass
+
+        class Form(with_metaclass(FormType, BaseForm)):
+            pass
+
+    This requires a bit of explanation: the basic idea is to make a
+    dummy metaclass for one level of class instantiation that replaces
+    itself with the actual metaclass.  Because of internal type checks
+    we also need to make sure that we downgrade the custom metaclass
+    for one level to something closer to type (that's why __call__ and
+    __init__ comes back from type etc.).
+
+    This has the advantage over six.with_metaclass of not introducing
+    dummy classes into the final MRO.
+    """
+    class metaclass(meta):
+        __call__ = type.__call__
+        __init__ = type.__init__
+        def __new__(cls, name, this_bases, d):
+            if this_bases is None:
+                return type.__new__(cls, name, (), d)
+            return meta(name, bases, d)
+    return metaclass('temporary_class', None, {})
+
+class SourceManager(with_metaclass(PluginMount, object)):
     """ SourceManager plugins must derive from this class.
     Methods that must be implemented by SourceManager plugins are:
     name(), get_actual_revision(), get_head_revision(),
-    extract(), update(), commit(), rebase(), deliver(), 
+    extract(), update(), commit(), rebase(), deliver(),
     dump(), list().
     Class attributes that must be available:
     plugin_name_, plugin_description_
     """
-    __metaclass__ = PluginMount
 
 
 loader = PluginLoader()

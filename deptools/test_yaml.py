@@ -25,6 +25,7 @@
 # OTHER DEALINGS IN THE SOFTWARE.
 #
 
+import sys, os
 import yaml
 
-print "yaml module loaded: version " + yaml.__version__
+print("yaml module loaded: version " + yaml.__version__)

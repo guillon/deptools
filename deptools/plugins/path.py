@@ -51,9 +51,11 @@
 #   is specified.
 #
 
+from __future__ import print_function
+
 from subprocess import call
 from plugins import SourceManager
-from digester import digester
+from digester.digester import digester
 from core import UserException
 import os, sys
 import yaml
@@ -101,7 +103,7 @@ class PathManager(SourceManager):
 
     def _cmd(self, args):
         if self.config.verbose:
-            print " ".join(args)
+            print(" ".join(args))
         status = call(args)
         if status != 0:
             raise UserException("command returned non-zero status: %d: %s" %
@@ -130,7 +132,8 @@ class PathManager(SourceManager):
             raise UserException("cannot access component path: " + self.path)
 
     def _digest(self):
-        list_file = tempfile.TemporaryFile()
+        list_file = tempfile.NamedTemporaryFile("w", delete=False)
+        list_file_name = list_file.name
         if os.path.isdir(self.path):
             digest_path = "."
         else:
@@ -143,60 +146,65 @@ class PathManager(SourceManager):
         os.chdir(self.cwd)
         if retcode != 0:
             raise UserException("cannot compute digest for component path: " % self.path)
-        list_file.seek(0)
-        return digest.digest_file_content_(list_file)
+
+        list_file.close()
+        list_file = open(list_file_name, "rb")
+        res = digest.digest_file_content_(list_file)
+        list_file.close()
+        os.remove(list_file_name)
+        return res
 
     def name(self):
         return self.name_
 
     def execute(self, args):
         if self.config.verbose:
-            print "Execute " + self.path
+            print("Execute " + self.path)
         self._subcmd(args)
 
     def extract(self, args = []):
         if self.config.verbose:
-            print "Extracting " + self.path
-        print "Extracting digest for component " + self.path
+            print("Extracting " + self.path)
+        print("Extracting digest for component " + self.path)
         self._check_path()
         digest = self._digest()
         self._check_digest(digest, self.revision)
-        print "%s digest is %s" % (self.path, digest)
+        print("%s digest is %s" % (self.path, digest))
 
     def update(self, args = []):
         if self.config.verbose:
-            print "Update " + self.path
-        print "Update " + self.path + ": nothing to do for path"
+            print("Update " + self.path)
+        print("Update " + self.path + ": nothing to do for path")
 
     def extract_or_updt(self, args = []):
         if self.config.verbose:
-            print "Extract or update " + self.path
+            print("Extract or update " + self.path)
         self.extract(args)
 
     def commit(self, args = []):
         if self.config.verbose:
-            print "Commit " + self.path
-        print "Commit " + self.path + ": nothing to do for path"
+            print("Commit " + self.path)
+        print("Commit " + self.path + ": nothing to do for path")
 
     def rebase(self, args = []):
         if self.config.verbose:
-            print "Rebase " + self.path
-        print "Rebase " + self.path + ": nothing to do for path"
+            print("Rebase " + self.path)
+        print("Rebase " + self.path + ": nothing to do for path")
 
     def deliver(self, args = []):
         if self.config.verbose:
-            print "Deliver " + self.path
-        print "Deliver " + self.path + ": nothing to do for path"
+            print("Deliver " + self.path)
+        print("Deliver " + self.path + ": nothing to do for path")
 
     def dump(self, args = []):
         if self.config.verbose:
-            print "Dump " + self.path
-        print yaml.dump(self.component)
+            print("Dump " + self.path)
+        print(yaml.dump(self.component, default_flow_style=True))
 
     def get_actual_revision(self):
         try:
             revision = self._digest()
-        except UserException, e:
+        except UserException as e:
             raise UserException("cannot get actual revision: " + str(e))
         return revision
 
@@ -205,22 +213,22 @@ class PathManager(SourceManager):
 
     def dump_actual(self, args = []):
         if self.config.verbose:
-            print "Dump_actual " + self.path
+            print("Dump_actual " + self.path)
         actual = self.component.copy()
         actual['revision'] = self.get_actual_revision()
-        print yaml.dump(actual)
+        print(yaml.dump(actual, default_flow_style=True))
 
     def dump_head(self, args = []):
         if self.config.verbose:
-            print "Dump_head " + self.path
+            print("Dump_head " + self.path)
         actual = self.component.copy()
         actual['revision'] = self.get_head_revision()
-        print yaml.dump(actual)
+        print(yaml.dump(actual, default_flow_style=True))
 
     def list(self, args = []):
         if self.config.verbose:
-            print "List " + self.path
-        print self.name_ + "," + self.revision +  "," + self.repos
+            print("List " + self.path)
+        print(self.name_ + "," + self.revision +  "," + self.repos)
 
 
 class PathManagerCmdLine:
@@ -244,28 +252,28 @@ class PathManagerCmdLine:
 
     @staticmethod
     def error(msg):
-        print >>sys.stderr, sys.argv[0] + ": error: "+ msg
+        print(sys.argv[0] + ": error: "+ msg, file=sys.stderr)
         sys.exit(1)
 
     def _serialize_manager(self, manager, ostream = sys.stdout):
-        print >> ostream, yaml.dump(manager)
+        print(yaml.dump(manager, default_flow_style=True), file=ostream)
 
     def _deserialize_manager(self, istream = sys.stdin):
-        return yaml.load(istream)
+        return yaml.unsafe_load(istream)
 
     def _new_session(self, args_serials):
         try:
             params_stream = open(args_serials[0], "r")
-        except IOError, e:
+        except IOError as e:
             self.error("can't open serial: " + str(e))
         with params_stream:
-            params = yaml.load(params_stream)
+            params = yaml.unsafe_load(params_stream)
         self._manager = PathManager(params['name'], params['component'])
 
     def _store_session(self):
         try:
             ofile = open(self._serial, "w")
-        except IOError, e:
+        except IOError as e:
             self.error("can't write serial: " + str(e))
         with ofile:
             self._serialize_manager(self._manager, ofile)
@@ -273,7 +281,7 @@ class PathManagerCmdLine:
     def _restore_session(self):
         try:
             ifile = open(self._serial, "r")
-        except IOError, e:
+        except IOError as e:
             self.error("can't open serial: " + str(e))
         with ifile:
             self._manager = self._deserialize_manager(ifile)
@@ -297,8 +305,8 @@ class PathManagerCmdLine:
             if self._cmd_name in dispatch:
                 dispatch[self._cmd_name](self._cmd_args)
             else:
-                print >>sys.stderr, "unexpected command, ignored: %s %s" % \
-                    (self._cmd_name, " ".join(self._cmd_args))
+                print("unexpected command, ignored: %s %s" % \
+                      (self._cmd_name, " ".join(self._cmd_args)), file=sys.stderr)
         self._store_session()
 
 if __name__ == "__main__":
@@ -306,9 +314,9 @@ if __name__ == "__main__":
         PathManagerCmdLine._error("missing arguments. Usage: path.py serial cmd ...")
     try:
         PathManagerCmdLine(sys.argv[1:]).run()
-    except UserException, e:
-        print >>sys.stderr, "error: %s" % str(e)
+    except UserException as e:
+        print("error: %s" % str(e), file=sys.stderr)
         sys.exit(1)
 else:
     if verbose == 1:
-        print "Loading " + __name__
+        print("Loading " + __name__)

@@ -35,6 +35,13 @@ error() {
     exit 1
 }
 
+do_test() {
+    echo "## ------------------------------------------------------------"
+    echo "## $*"
+    echo "## ------------------------------------------------------------"
+    $TEST $*
+}
+
 dir=`dirname $0`
 dir=`cd $dir; pwd`
 TEST="env PYTHONPATH=$dir/.. python $dir/git.py"
@@ -64,6 +71,7 @@ git add afile
 git commit -m 'Added afile'
 git remote add origin $cwd/${tmpbase}.1.git
 git clone --bare . $cwd/${tmpbase}.1.git
+git log | cat
 cd ..
 
 # Prepare dependency spec
@@ -78,25 +86,25 @@ component:
 EOF
 
 # A deptools session
-$TEST ${tmpbase}.1.ser new ${tmpbase}.1.dep
-$TEST ${tmpbase}.1.ser extract 
-$TEST ${tmpbase}.1.ser extract # second extract should be ok
-$TEST ${tmpbase}.1.ser dump
-$TEST ${tmpbase}.1.ser dump_actual
-$TEST ${tmpbase}.1.ser dump_head
-$TEST ${tmpbase}.1.ser update
-$TEST ${tmpbase}.1.ser execute touch bfile
-$TEST ${tmpbase}.1.ser extract_or_updt
-$TEST ${tmpbase}.1.ser execute git add bfile
-$TEST ${tmpbase}.1.ser commit -m 'Added empty bfile'
-$TEST ${tmpbase}.1.ser extract_or_updt
-$TEST ${tmpbase}.1.ser rebase
-$TEST ${tmpbase}.1.ser deliver
-$TEST ${tmpbase}.1.ser execute touch cfile
-$TEST ${tmpbase}.1.ser execute git add cfile
-$TEST ${tmpbase}.1.ser commit -m 'Added empty cfile'
-$TEST ${tmpbase}.1.ser execute rm afile
-$TEST ${tmpbase}.1.ser extract_or_updt
+do_test ${tmpbase}.1.ser new ${tmpbase}.1.dep
+do_test ${tmpbase}.1.ser extract
+do_test ${tmpbase}.1.ser extract # second extract should be ok
+do_test ${tmpbase}.1.ser dump
+do_test ${tmpbase}.1.ser dump_actual
+do_test ${tmpbase}.1.ser dump_head
+do_test ${tmpbase}.1.ser update
+do_test ${tmpbase}.1.ser execute touch bfile
+do_test ${tmpbase}.1.ser extract_or_updt
+do_test ${tmpbase}.1.ser execute git add bfile
+do_test ${tmpbase}.1.ser commit -m 'Added_empty_bfile'
+do_test ${tmpbase}.1.ser extract_or_updt
+do_test ${tmpbase}.1.ser rebase
+do_test ${tmpbase}.1.ser deliver
+do_test ${tmpbase}.1.ser execute touch cfile
+do_test ${tmpbase}.1.ser execute git add cfile
+do_test ${tmpbase}.1.ser commit -m 'Added_empty_cfile'
+do_test ${tmpbase}.1.ser execute rm afile
+do_test ${tmpbase}.1.ser extract_or_updt
 
 
 # Add a new file in the work repository
@@ -111,14 +119,14 @@ git push origin master
 cd ..
 
 # A second deptools session
-$TEST ${tmpbase}.1.ser extract_or_updt && exit 1 # should fail with conflict on afile
-$TEST ${tmpbase}.1.ser rebase && exit 1 # should fail with conflict on afile
-$TEST ${tmpbase}.1.ser execute git reset  --hard
-$TEST ${tmpbase}.1.ser extract_or_updt && exit 1 # should fail because needs rebase/merge
-$TEST ${tmpbase}.1.ser rebase 
-$TEST ${tmpbase}.1.ser deliver
-$TEST ${tmpbase}.1.ser list
-$TEST ${tmpbase}.1.ser dump_actual
+do_test ${tmpbase}.1.ser extract_or_updt && exit 1 # should fail with conflict on afile
+do_test ${tmpbase}.1.ser rebase && exit 1 # should fail with conflict on afile
+do_test ${tmpbase}.1.ser execute git reset  --hard
+do_test ${tmpbase}.1.ser extract_or_updt && exit 1 # should fail because needs rebase/merge
+do_test ${tmpbase}.1.ser rebase
+do_test ${tmpbase}.1.ser deliver
+do_test ${tmpbase}.1.ser list
+do_test ${tmpbase}.1.ser dump_actual
 
 # Now checks that the repository is ok
 git clone ${tmpbase}.1.git ${tmpbase}.final

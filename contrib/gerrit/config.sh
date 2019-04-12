@@ -6,4 +6,4 @@ server=ssh://gerrit.st.com:29418
 remote=gerrit
 project=ci-kb/deptools
 branch=master
-reviewers="guillon thomas.thery@st.com laurent.alfonsi@st.com"
+reviewers="guillon thomas.thery@st.com jean-marc.bouche@st.com antoine.moynault@st.com"

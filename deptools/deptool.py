@@ -26,6 +26,8 @@
 # OTHER DEALINGS IN THE SOFTWARE.
 #
 
+from __future__ import print_function
+
 import os, sys
 import argparse, copy
 
@@ -93,10 +95,10 @@ class DependencyFile:
         self.content = content
 
     def dump(self, ostream = sys.stdout):
-        print >>ostream, yaml.dump(self.content)
+        print(yaml.dump(self.content, default_flow_style=True), file=ostream)
 
     def load(self, istream = sys.stdin):
-        self.content = yaml.load(istream)
+        self.content = yaml.unsafe_load(istream)
 
 class Dependency:
     def __init__(self, config):
@@ -111,8 +113,8 @@ class Dependency:
             stream = sys.stdin
         else:
             try:
-                stream = file(self.config.dep_file)
-            except IOError, e:
+                stream = open(self.config.dep_file)
+            except IOError as e:
                 raise UserException("cannot access dependencies file %s: %s" % \
                                         (self.config.dep_file, e.strerror))
         deps =  DependencyFile()
@@ -146,28 +148,28 @@ class Dependency:
 
     def prepare(self):
         def assert_string(v, msg=""):
-            if not isinstance(v, (str, unicode)):
+            if not isinstance(v, (str, bytes)):
                 raise UserException(
                     "%svalue is not a string, please use quotes: %s" % (msg, str(v)))
         configurations = self.deps.get("configurations")
         if configurations == None or type(configurations) != type({}):
-            raise Exception, "Missing configurations map in dependency file: " + self.config.dep_file
+            raise Exception("Missing configurations map in dependency file: " + self.config.dep_file)
         Check.check(configurations, lambda x: assert_string(x, "in configurations: "))
         components = configurations.get(self.config.configuration)
         if components == None or type(components) != type([]):
-            raise Exception, "Missing components list specification for configuration: " + self.config.configuration
+            raise Exception("Missing components list specification for configuration: " + self.config.configuration)
         repositories = self.deps.get("repositories")
         if repositories == None or type(repositories) != type({}):
-            raise Exception, "Missing repositories map in dependency file: " + self.config.dep_file
+            raise Exception("Missing repositories map in dependency file: " + self.config.dep_file)
         Check.check_dict_keys(repositories, lambda x: assert_string(x, "in repositories names: "))
         self.components = []
         for component in components:
             repository = repositories.get(component)
             if repository == None or type(repository) != type({}):
-                raise Exception, "Missing repository map for component: " + component
+                raise Exception("Missing repository map for component: " + component)
             format = repository.get("format")
             if format == None or type(format) != type(""):
-                raise Exception, "Missing format specification for component: " + component
+                raise Exception("Missing format specification for component: " + component)
             self.components.append(SourceManager.get_plugin(format)(component, repository))
 
     def foreach(self, command, args=[]):
@@ -195,34 +197,34 @@ class Dependency:
             raise UserException("unexpected command: %s" % command)
 
 def print_error(msg):
-  print >>sys.stderr, "%s: error: %s" % (os.path.basename(sys.argv[0]), msg)
+    print("%s: error: %s" % (os.path.basename(sys.argv[0]), msg), file=sys.stderr)
 
 def error(msg):
-  print_error(msg)
-  sys.exit(1)
+    print_error(msg)
+    sys.exit(1)
 
 def usage(config):
-  print "usage: " + sys.argv[0] + " [options...] [command...]"
-  print
-  print "where command is one of:"
-  print " list: list all dependencies"
-  print " extract: extract all dependencies"
-  print " update: update all dependencies"
-  print " extract_or_updt: extract all dependencies or update if already existing"
-  print " commit: commit all dependencies"
-  print " rebase: rebase changes on top of upstream"
-  print " deliver: push changes upstream"
-  print " execute: execute command for all dependencies"
-  print " dump: dumps to stdout the dependencies"
-  print " dump_actual: dumps to stdout the dependencies with actual revisions"
-  print " dump_head: dumps to stdout the dependencies at head revisions"
-  print ""
-  print "where options are:"
-  print " -f|--file <dep_file> : dependency file. Default [" + config.dep_file + "]"
-  print " -c|--config <configuration> : configuration to use from the dependency file. Default [" + config.configuration + "]"
-  print " -q|--quiet : quiet mode"
-  print " -v|--version : output this script version"
-  print " -h[--help : this help page"
+    print("usage: " + sys.argv[0] + " [options...] [command...]")
+    print()
+    print("where command is one of:")
+    print(" list: list all dependencies")
+    print(" extract: extract all dependencies")
+    print(" update: update all dependencies")
+    print(" extract_or_updt: extract all dependencies or update if already existing")
+    print(" commit: commit all dependencies")
+    print(" rebase: rebase changes on top of upstream")
+    print(" deliver: push changes upstream")
+    print(" execute: execute command for all dependencies")
+    print(" dump: dumps to stdout the dependencies")
+    print(" dump_actual: dumps to stdout the dependencies with actual revisions")
+    print(" dump_head: dumps to stdout the dependencies at head revisions")
+    print("")
+    print("where options are:")
+    print(" -f|--file <dep_file> : dependency file. Default [" + config.dep_file + "]")
+    print(" -c|--config <configuration> : configuration to use from the dependency file. Default [" + config.configuration + "]")
+    print(" -q|--quiet : quiet mode")
+    print(" -v|--version : output this script version")
+    print(" -h[--help : this help page")
 
 def main():
     pdir = os.path.dirname(sys.argv[0])
@@ -242,7 +244,7 @@ def main():
         usage(def_config)
         sys.exit(0)
     if opts.version:
-        print "%s version %s" % (os.path.basename(sys.argv[0]), version)
+        print("%s version %s" % (os.path.basename(sys.argv[0]), version))
         sys.exit(0)
     config.handle_options(opts, args)
 
@@ -253,8 +255,8 @@ def main():
     try:
         dependency = Dependency(config)
         dependency.exec_cmd(args[0], args[1:])
-    except UserException, e:
+    except UserException as e:
         error(str(e))
 
 if __name__ == "__main__":
-  main()
+    main()

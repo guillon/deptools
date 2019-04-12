@@ -35,6 +35,13 @@ error() {
     exit 1
 }
 
+do_test() {
+    echo "## ------------------------------------------------------------"
+    echo "## $*"
+    echo "## ------------------------------------------------------------"
+    $TEST $*
+}
+
 user=${USER}
 hostname=`hostname`
 dir=`dirname $0`
@@ -75,14 +82,14 @@ component:
 EOF
 
 # A deptools session
-$TEST ${tmpbase}.1.ser new ${tmpbase}.1.dep
-$TEST ${tmpbase}.1.ser extract 
-$TEST ${tmpbase}.1.ser extract # second extract should be ok
-$TEST ${tmpbase}.1.ser dump_actual
-$TEST ${tmpbase}.1.ser dump_head
-$TEST ${tmpbase}.1.ser dump
-$TEST ${tmpbase}.1.ser list
-$TEST ${tmpbase}.1.ser execute cat afile
+do_test ${tmpbase}.1.ser new ${tmpbase}.1.dep
+do_test ${tmpbase}.1.ser extract
+do_test ${tmpbase}.1.ser extract # second extract should be ok
+do_test ${tmpbase}.1.ser dump_actual
+do_test ${tmpbase}.1.ser dump_head
+do_test ${tmpbase}.1.ser dump
+do_test ${tmpbase}.1.ser list
+do_test ${tmpbase}.1.ser execute cat afile
 
 # Prepare dependency spec
 sum=`sha1sum ${cwd}/${tmpbase}.1.work/bfile.tgz | cut -f1 -d' '`
@@ -96,20 +103,20 @@ component:
 EOF
 
 # A deptools session
-$TEST ${tmpbase}.2.ser new ${tmpbase}.2.dep
-$TEST ${tmpbase}.2.ser extract 
-$TEST ${tmpbase}.2.ser extract_or_updt
-$TEST ${tmpbase}.2.ser dump_actual
-$TEST ${tmpbase}.2.ser dump_head
-$TEST ${tmpbase}.2.ser dump
-$TEST ${tmpbase}.2.ser list
-$TEST ${tmpbase}.2.ser execute cat bfile
+do_test ${tmpbase}.2.ser new ${tmpbase}.2.dep
+do_test ${tmpbase}.2.ser extract
+do_test ${tmpbase}.2.ser extract_or_updt
+do_test ${tmpbase}.2.ser dump_actual
+do_test ${tmpbase}.2.ser dump_head
+do_test ${tmpbase}.2.ser dump
+do_test ${tmpbase}.2.ser list
+do_test ${tmpbase}.2.ser execute cat bfile
 
 # No op operations
-$TEST ${tmpbase}.2.ser update
-$TEST ${tmpbase}.2.ser commit
-$TEST ${tmpbase}.2.ser rebase
-$TEST ${tmpbase}.2.ser deliver
+do_test ${tmpbase}.2.ser update
+do_test ${tmpbase}.2.ser commit
+do_test ${tmpbase}.2.ser rebase
+do_test ${tmpbase}.2.ser deliver
 
 # Notify success
 echo SUCCESS

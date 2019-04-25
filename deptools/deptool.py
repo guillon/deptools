@@ -37,7 +37,7 @@ from core import UserException
 from plugins import SourceManager
 from plugins import PluginLoader
 
-version = "0.2.0"
+version = "0.3.0"
 
 class DefaultConfig:
     def __init__(self):

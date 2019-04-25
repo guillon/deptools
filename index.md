@@ -1,3 +1,4 @@
+[![Build Status](https://api.travis-ci.org/guillon/deptools.png?branch=master)](https://travis-ci.org/guillon/deptools/branches)
 
 # Synopsis
 
@@ -13,15 +14,15 @@ interpreting the list of dependencies.
 The components may be hosted in distinct repositories and repository formats.  
 
 The only requirements for starting a project are thus:
-* the dependencies script (https://buildhive.cloudbees.com/job/guillon/job/deptools/ws/dependencies)
-* a well formed _DEPENDENCIES_ specification (ref to the example below).
+* the _dependencies_ script from the release page: https://github.com/guillon/deptools/releases
+* a well formed _DEPENDENCIES_ specification, ref to the example below.
 
 # Example
 
 For instance here is a specification for the head branch of the deptools
 project components, including the sources tree and the GitHub project pages:
 
-    $ cd deptools-all
+    $ cd examples/deptools-all
     $ cat DEPENDENCIES
     configurations:
       default: [ dep-tools, gh-pages ]
@@ -39,7 +40,7 @@ project components, including the sources tree and the GitHub project pages:
 The `dependencies` script that can be stored with the components
 description is used to extract the components:
 
-    $ cd deptools-all
+    $ cd examples/deptools-all
     $ ./dependencies extract
     Cloning into 'deptools'  # This is actually a dependency of the ./dependencies script itself
     Cloning into 'dep-tools' # This is the first component described in the default configuration
@@ -59,7 +60,6 @@ for instance with:
  
 It can be stored in the deptools-all project for latter extraction:
 
-    $ cd deptools-all
     $ ./dependencies extract -f MANIFEST-v0.1
 
 For projects with strict management of components revision, the `DEPENDENCIES` file
@@ -68,13 +68,22 @@ to a new revision implies also a new revision for the project. Indeed, the
 `DEPENDENCIES` file has to be updated and commited. In this case the `DEPENDENCIES`
 files acts as an always up-to-date manifest.
 
-# Features
+# Usage
 
 The supported repositories formats are implemented as plugins to deptools:
 * git: git repository
 * svn: subversion repositories
-* tar: archive file (under development)
+* tar: archive files
+* zip: archive files
 * hg: mercurial (to be tested)
+
+A ./.deptools directory at the point of extraction may be created for caching
+fetched objects or for temporary usage. Note that it may hold an important
+part of the disk space depending on the repository format.
+
+Also, if using the dependencies bootstrap script referenced above, the
+deptools tool itself will be extracted in the ./deptools directory which
+it thus also reserved in this case.
 
 The actions that can be run on each component are for instance:
 * extract: extract components from their respective repositories
@@ -119,7 +128,7 @@ Refer to the project home page at:
 http://guillon.github.com/deptools
 
 Refer to the current build and validation status at:
-https://buildhive.cloudbees.com/job/guillon/job/deptools
+https://travis-ci.org/guillon/deptools/branches
 
 Fill issues and enhancement request at:
 https://github.com/guillon/deptools/issues

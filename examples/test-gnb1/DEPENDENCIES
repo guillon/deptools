@@ -13,12 +13,12 @@ repositories:
   google_testsuite:
     format: git
     label: master
-    repos: /home/compwork/guillon/pub/git/google_testsuite.git
+    repos: /prj/compwork/guillon/pub/git/google_testsuite.git
     revision: HEAD
     alias:
   google_testsuite_tools:
     format: git
-    repos: /home/compwork/guillon/pub/git/google_testsuite_tools.git
+    repos: /prj/compwork/guillon/pub/git/google_testsuite_tools.git
 variables:
   - top_repos
   - top_branch

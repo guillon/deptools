@@ -1,30 +1,113 @@
 
-This directory contains some helper scripts for gerrit code review.
+This directory contains some helper scripts for Gerrit code review.
 
+================================================================================
+* Pre-requisite: install the commit hook for the Change-Ids
+================================================================================
+
+Before performing the first commit in your local repository, you need to install
+the commit hook for 'Change-Id' with the command:
+
+  $ ./contrib/gerrit/gerrit-init
+
+This commit hook will automatically add a line to your commit message:
+
+ Change-Id: Ia3f5a9cb96aabf34e08420571be93364ad2f9c71
+
+This line uniquely identifies your patch and must be kept when amending it.
+For this reason, you *must not* specify the commit message on the git command
+line when amending it:
+
+  $ git commit --amend -m "my new commit message"   # !! INCORRECT !!
+
+Indeed, this command will discard the existing commit message and a new
+Change-Id will be generated in it. The Gerrit server will then consider this
+commit as a new patch.
+
+
+================================================================================
 * Pushing a new change for review: push-change
+================================================================================
+
+After performing your local changes, create a new commit in the local repository:
+
+  <Modify your files>
+  $ git add <modified files>
+  $ git commit
+
+  In addition to the 'Change-Id' tag line that will be automatically added, the
+  last paragraph of your commit message can be populated with the following special
+  tags:
+  Codex-Id: 12345
+  Fix-Codex-Id: 12345
+  Task-Codex-Id: 12345
+
+  These tags will be used during the 'push-change' to automatically add a comment
+  in the corresponding Codex tracker entry with a link to the Gerrit review.
+
 
 Once you have in your HEAD some commits ready for review, execute the command:
-$ contrib/gerrit/push-change
-Pushing new changes on ref HEAD to remote ssh://gnx5855.gnb.st.com:29418/atos.
-...
-remote: New Changes:
-remote:   http://gnx5855.gnb.st.com:9000/16
-...
+
+  $ contrib/gerrit/push-change
+
+  Pushing new changes on ref HEAD to remote ssh://gerrit.st.com:29418/ci-kb/deptools.
+  ...
+  remote: New Changes:
+  remote:   http://gerrit.st.com:29418/16
+  ...
 
 An optional ref to be pushed can be given as additional argument (defaults to HEAD).
 
-* Updating the patchset for an existing change: update-change
 
-If you have to modify a patchset, amend your commit and push a new patchset for the change:
-$ contrib/gerrit/update-change 16
-Updating patchset 16 with ref HEAD to remote ssh://gnx5855.gnb.st.com:29418/atos.
-...
-remote: Processing changes: updated: 1, refs: 1, done
-...
+You can also define the following environment variables to alter the push-change behavior:
+
+  $ env enforce=1 contrib/gerrit/push-change
+
+  -> By default, the push action is aborted if the local HEAD contains several commits
+     that are not present in the remote branch.
+     When the 'enforce' variable is set, all the commits will be pushed in Gerrit
+     and will induce as many reviews as there are commits.
+
+  $ env NO_COMMIT_MSG_CHECK=1 contrib/gerrit/push-change
+
+  -> In this mode, the commit message won't be checked against the presence of
+     Change-Id or the length of the commit message.
+
+  $ env NO_TRACKER_UPDATE=1 contrib/gerrit/push-change
+
+  -> In this mode, Codex tracker entries won't be updated.
+
+
+================================================================================
+* Updating the patchset for an existing change: push-change
+================================================================================
+
+If you have to modify a patchset, amend your commit (without specifying the commit
+message in the git command, as describe in the first section) and push a new
+patchset for the change:
+
+  $ git commit --amend
+    <Edit the commit message, and keep the existing Change-Id in the last paragraph>
+
+  $ contrib/gerrit/push-change
+
+  Updating the patch referenced by the Change-Id on Gerrit
+  ...
+  remote: Processing changes: updated: 1, refs: 1, done
+  ...
 
 An optional ref to be pushed can be given as additional argument (defaults to HEAD).
 
+Note: The 'Change-Id:' line must always be in the last paragraph of the commit message.
+
+Deprecation: the 'update-change' script was previously used to update an existing
+patch. This command is now deprecated and directly remapped on the 'push-change'.
+It will be removed later on.
+
+
+================================================================================
 * Gerrit configuration
+================================================================================
 
 The gerrit configuration is located in file contrib/gerrit/config.sh
 If you have to locally change the configuration, override any parameter there
@@ -35,7 +118,10 @@ git remote add gerrit ssh://gnx5855.gnb.st.com:29418/atos
 in this case the gerrit remote will take precedence over the server & project
 parameters defined in config.sh
 
+
+================================================================================
 * Default behavior
+================================================================================
 
 The default behavior is to simply push changes for the master branch, i.e.
 equivalent to:

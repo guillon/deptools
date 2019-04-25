@@ -2,29 +2,66 @@
 #
 # Usage: push-change [ref]
 #
-# Push a ref for review (default: HEAD).
-# This will create a new patchset for review on gerrit.
+# Push a list of changes up to ref (default: HEAD).
+# This will create a set of new changeset for review on gerrit.
+#
+# Be careful that for pushing a single patch set, your ref
+# must be a direct descendant of a revision known to gerrit.
+# Otherwise all the changes up to your ref will be pushed as
+# distinct changesets.
 #
 # If the gerrit remote is defined, use it, otherwise
 # push directly to the server defined in config.sh.
 #
 # User email is excluded from the reviewer list.
 #
+# If the environment variable enforce is defined and set to
+# a value different from 'no', then the review will accept
+# multiple commits and will generate one review per commit
+#
 
 set -e
 ref=${1:-HEAD}
+enforce=${enforce:-no}
 
-source `dirname $0`/common.sh
-source `dirname $0`/config.sh
-[ ! -f `dirname $0`/local.sh ] || source `dirname $0`/local.sh
+
+gerrit_dir=$(dirname $(readlink -f $0))
+source ${gerrit_dir}/common.sh
+source ${gerrit_dir}/config.sh
+[ ! -f ${gerrit_dir}/local.sh ] || source ${gerrit_dir}/local.sh
 
 # Forge reviewer options from reviewers list
 reviewer_options=`forge_reviewer_options "$reviewers"`
 
 # Forge actual remote if the first one does not exits
-remote=`forge_remote_parameter $remote $protocol $server/$project`
+remote=`forge_remote_parameter $remote $server/$project`
 
-# Update patchset
-echo "Pushing new changes on ref $ref to remote $remote."
+# Check commit message
+echo "Checking last commit message."
+[ "${NO_COMMIT_MSG_CHECK}" = "" ] \
+    && git show -s --format=%B $ref | ${gerrit_dir}/check-commit-msg
+
+# Detect problems related to commits
+commit=`git rev-list origin/${branch}..${ref} --count`
+if [ "$commit" == "" ] ; then
+    echo "error: unable to determine changeset." >&2
+    exit 1
+fi
+if [ $commit -eq 0 ] ; then
+    echo "error: no new changeset, please commit one." >&2
+    exit 1
+elif [ $commit -gt 1 ] ; then
+    if [ "$enforce" = "no" ] ; then
+        echo "error: please squash your last $commit commits into a single one before pushing for review. Or re-launch the script with the environment variable enforce defined." >&2
+        exit 1
+    fi
+fi
+
+# Push new changesets
+echo "Pushing new changes up to $ref for branch $branch of gerrit remote $remote."
 echo "Executing: git push --receive-pack=\"git receive-pack $reviewer_options\" $remote $ref:refs/for/$branch"
 git push --receive-pack="git receive-pack $reviewer_options" $remote $ref:refs/for/$branch
+
+# Update codex tracker with code-review url
+[ "${NO_TRACKER_UPDATE}" = "" ] \
+    && ! ${gerrit_dir}/update-tracker ${server} ${ref}

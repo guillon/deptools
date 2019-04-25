@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+#
+# Usage: gerrit-init
+#
+# Initialize local gerrit settings.
+#
+# For now, it simply installs the git commit-msg hook that
+# will set the Change-Id field on each commited patch.
+# It also installs a prepare-commit-msg hook which adds some
+# common lines to the commit message
+#
+
+set -e
+
+gerrit_dir=$(dirname $(readlink -f $0))
+source ${gerrit_dir}/common.sh
+source ${gerrit_dir}/config.sh
+[ ! -f ${gerrit_dir}/local.sh ] || source ${gerrit_dir}/local.sh
+
+forge_scp_command() {
+    local server="${1?}"
+    local server_name=`echo $server | sed 's/.*:\/\///' | sed 's/:.*//'`
+    local server_port=`echo $server | sed 's/.*://'`
+    local gerrit_user=`git config gerrit.name`
+    [ "$gerrit_user" != "" ] && gerrit_user="$gerrit_user@"
+    echo "scp -p -P ${server_port} ${gerrit_user}${server_name}"
+}
+
+git_dir=$(git rev-parse --git-dir)
+
+[ -d ${git_dir} ]              \
+    || ( echo "error: .git directory not found." >&2; exit 1 )
+
+[ -f ${git_dir}/hooks/commit-msg ] \
+    && (echo "warning: commit-msg hook already installed." >&2 ) \
+    || `forge_scp_command $server`:hooks/commit-msg ${git_dir}/hooks/
+
+cp -v ${gerrit_dir}/prepare-commit-msg ${git_dir}/hooks/
+

@@ -27,7 +27,7 @@
 
 from subprocess import call, check_call, Popen, PIPE
 from plugins import SourceManager
-import os, sys
+import os, sys, hashlib, shutil
 import yaml
 
 verbose = 0
@@ -101,6 +101,40 @@ class GitManager(SourceManager):
         os.chdir(self.cwd)
         return output
 
+    def _get_cachedir(self):
+        dir = os.path.abspath(os.path.join(self.cwd,
+                                           ".deptools",
+                                           "cache",
+                                           "plugins",
+                                           self.plugin_name_))
+        return dir
+
+    def _get_cached_repo(self):
+        repo_sha1sum = hashlib.sha1(self.repos).hexdigest()
+        repo_basename = os.path.basename(self.repos)
+        if not repo_basename.endswith(".git"):
+            repo_basename += ".git"
+        return os.path.join(self._get_cachedir(),
+                            repo_sha1sum[:2],
+                            repo_sha1sum[2:],
+                            repo_basename)
+
+    def _fetch_cached_repo(self):
+        cached_repo = self._get_cached_repo()
+        def _git_cached(args):
+            self._cmd(['env', 'GIT_DIR=%s' % cached_repo,
+                       self.config.git] + args)
+        if not os.path.exists(cached_repo):
+            os.makedirs(cached_repo)
+            _git_cached(['init', '--bare'])
+            _git_cached(['config', 'remote.origin.url',
+                         self.repos])
+            _git_cached(['config', '--add', 'remote.origin.fetch',
+                         '+refs/heads/*:refs/heads/*'])
+            _git_cached(['config', '--add', 'remote.origin.fetch',
+                         '+refs/tags/*:refs/tags/*'])
+        _git_cached(['fetch', 'origin', '--prune'])
+
     def name(self):
         return self.name_
 
@@ -109,10 +143,15 @@ class GitManager(SourceManager):
         self._subcmd(args)
 
     def extract(self, args = []):
+        if os.path.exists(self.basename) and "--force" in args:
+            print "Removing directory '" + self.basename + "'"
+            shutil.rmtree(self.basename)
         if not os.path.exists(self.basename):
             print "Extracting component in '" + self.basename + "'"
             try:
-                self._cmd([self.config.git, 'clone', '-b', self.label, self.repos, self.basename])
+                self._fetch_cached_repo()
+                self._cmd([self.config.git, 'clone', '--reference', self._get_cached_repo(),
+                           '-b', self.label, self.repos, self.basename])
                 self._subcmd([self.config.git, 'reset', '--hard', self.revision])
             except Exception, e:
                 raise Exception, "cannot clone component: " + str(e)
@@ -122,6 +161,7 @@ class GitManager(SourceManager):
     def update(self, args = []):
         print "Updating component in '" + self.basename + "'"
         try:
+            self._fetch_cached_repo()
             self._subcmd([self.config.git, 'pull', '--ff-only'])
         except Exception, e:
             raise Exception, "cannot update component: " + str(e)
@@ -142,6 +182,7 @@ class GitManager(SourceManager):
     def rebase(self, args = []):
         print "Rebasing component in '" + self.basename + "'"
         try:
+            self._fetch_cached_repo()
             self._subcmd([self.config.git, 'pull', '--rebase'])
         except Exception, e:
             raise Exception, "cannot rebase component: " + str(e)
@@ -149,6 +190,7 @@ class GitManager(SourceManager):
     def deliver(self, args = []):
         print "Delivering component in '" + self.basename + "'"
         try:
+            self._fetch_cached_repo()
             self._subcmd([self.config.git, '-c', 'push.default=upstream', 'push'])
         except Exception, e:
             raise Exception, "cannot deliver component: " + str(e)

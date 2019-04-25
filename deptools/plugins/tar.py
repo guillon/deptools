@@ -58,7 +58,7 @@ from subprocess import call, check_call, Popen, PIPE
 from plugins import SourceManager
 import os, sys
 import yaml
-import tempfile, shutil
+import tempfile, shutil, hashlib
 
 verbose = 0
 
@@ -70,6 +70,7 @@ class TarConfig:
         self.curl_options = [ '-k', '-L', '--retry', '3' ]
         self.scp = 'scp'
         self.sha1sum = 'sha1sum'
+        self.unzip = 'unzip'
         self.verbose = 0
 
 class URI:
@@ -229,8 +230,6 @@ class TarManager(SourceManager):
         uri = URI(self.repos)
         self.alias = str(component.get('alias', uri.basename()))
         self.basename = self.alias
-        self.filename = uri.basename()
-        (self.uri_basename, _) = uri.base_and_ext()
         self.type = uri.type()
         self.scheme = uri.scheme()
         self.uri = uri.uri()
@@ -273,30 +272,44 @@ class TarManager(SourceManager):
         return output
 
     def _get_cachedir(self):
-        dir = os.path.abspath(os.path.join(self.cwd, ".dependencies", "cache"))
-        if not os.path.exists(dir):
-            os.makedirs(dir)
+        dir = os.path.abspath(os.path.join(self.cwd,
+                                           ".deptools",
+                                           "cache",
+                                           "plugins",
+                                           self.plugin_name_))
         return dir
 
+    def _get_cached_archive(self):
+        repo_sha1sum = hashlib.sha1(self.repos).hexdigest()
+        repo_basename = os.path.basename(self.repos)
+        return os.path.join(self._get_cachedir(),
+                            repo_sha1sum[:2],
+                            repo_sha1sum[2:],
+                            repo_basename)
+
     def _get_tmpdir(self):
-        dir = os.path.abspath(os.path.join(self.cwd, ".dependencies", "tmp"))
-        if not os.path.exists(dir):
-            os.makedirs(dir)
+        dir = os.path.abspath(os.path.join(self.cwd, ".deptools", "tmp"))
         return dir
 
     def _make_tmpdir(self):
-        return tempfile.mkdtemp(dir=self._get_tmpdir())
+        tmpdir = self._get_tmpdir()
+        if not os.path.exists(tmpdir):
+            os.makedirs(tmpdir)
+        return tempfile.mkdtemp(dir=tmpdir)
             
-    def _get_cached_file(self):
-        return os.path.join(self._get_cachedir(), self.filename)
-        
-    def _fetch_uri(self):
+    def _fetch_archive(self):
+        cached_archive = self._get_cached_archive()
+        if (self.revision != "HEAD" and os.path.exists(cached_archive) and
+            self.revision == self.get_actual_revision()):
+            return
         try:
+            if not os.path.exists(os.path.dirname(cached_archive)):
+                os.makedirs(os.path.dirname(cached_archive))
             if self.scheme == URI._scheme.SSH:
-                self._cmd([self.config.scp, self.remote + ":" + self.path, self._get_cached_file()])
+                self._cmd([self.config.scp, self.remote + ":" + self.path, cached_archive])
             else:
                 self._cmd([self.config.curl] + self.config.curl_options +
-                          [ "-o", self._get_cached_file(), self.uri])
+                          [ "-o", cached_archive, self.uri])
         except Exception, e:
             raise Exception("cannot acces remote URI: " + self.repos + ": " + str(e))
 
@@ -305,24 +318,25 @@ class TarManager(SourceManager):
             raise Exception("archive component %s sha1sum (%s) mismatch expected sha1sum (%s)" %
                             (self.name_, self.get_actual_revision(), self.revision))
 
-    def _extract_uri(self):
+
+    def _extract_archive(self):
         assert not os.path.exists(self.basename)
         tmpdir = self._make_tmpdir()
         try:
             if self.type == URI._type.TAR:
-                self._cmd([self.config.tar, "xf", self._get_cached_file(), "-C", tmpdir],
+                self._cmd([self.config.tar, "xf", self._get_cached_archive(), "-C", tmpdir],
                           self.ignore_status)
             elif self.type == URI._type.TAR_GZ:
-                self._cmd([self.config.tar, "xzf", self._get_cached_file(), "-C", tmpdir],
+                self._cmd([self.config.tar, "xzf", self._get_cached_archive(), "-C", tmpdir],
                           self.ignore_status)
             elif self.type == URI._type.TAR_BZ2:
-                self._cmd([self.config.tar, "xjf", self._get_cached_file(), "-C", tmpdir],
+                self._cmd([self.config.tar, "xjf", self._get_cached_archive(), "-C", tmpdir],
                           self.ignore_status)
             elif self.type == URI._type.TAR_XZ:
-                self._cmd([self.config.tar, "xJf", self._get_cached_file(), "-C", tmp_dir],
+                self._cmd([self.config.tar, "xJf", self._get_cached_archive(), "-C", tmpdir],
                           self.ignore_status)
             elif self.type == URI._type.ZIP:
-                self._cmd([self.config.unzip, "-q", "-d", tmpdir, self._get_cached_file()],
+                self._cmd([self.config.unzip, "-q", "-d", tmpdir, self._get_cached_archive()],
                           self.ignore_status)
             else:
                 raise Exception("unsupported file type in URI: " + self.repos)
@@ -348,9 +362,9 @@ class TarManager(SourceManager):
             print "Extract " + self.basename
         if not os.path.exists(self.basename):
             try:
-                self._fetch_uri()
+                self._fetch_archive()
                 self._check_revision()
-                self._extract_uri()
+                self._extract_archive()
             except Exception, e:
                 raise Exception("cannot extract component: " + str(e))
         else:
@@ -391,7 +405,7 @@ class TarManager(SourceManager):
 
     def get_actual_revision(self):
         try:
-            output = self._cmd_output([self.config.sha1sum, self._get_cached_file()])
+            output = self._cmd_output([self.config.sha1sum, self._get_cached_archive()])
         except Exception, e:
             raise Exception("cannot get actual revision: " + str(e))
         return output.strip().split(" ")[0]

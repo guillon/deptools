@@ -7,7 +7,7 @@ script:
   - make clean
   - make DEPTOOL_REPO=`git remote get-url origin` DEPTOOL_REV=`git rev-parse HEAD` all
   - mkdir -p tmp-test && (cd tmp-test && ../dependencies --version)
-  - make check
+  - make DEBUG=1 check
   - make install PREFIX=deploy
 deploy:
   provider: releases

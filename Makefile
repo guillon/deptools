@@ -42,19 +42,27 @@ all: $(SCRIPTS)
 
 $(SCRIPTS): Makefile
 
-$(SCRIPTS): %: %.in
-	(sed -e 's|@DEPTOOL_REPO@|$(DEPTOOL_REPO)|g' -e 's|@DEPTOOL_REV@|$(DEPTOOL_REV)|g' $< > $@ && chmod 755 $@) || rm -f $@
+$(SCRIPTS): %: %.last
+	diff $* $*.last >/dev/null; \
+	if [ $$? != 0 ]; then \
+	  cp $*.last $*; \
+	  chmod 755 $*; \
+	fi
+
+$(SCRIPTS).last: %.last: %.in .FORCE
+	sed -e 's|@DEPTOOL_REPO@|$(DEPTOOL_REPO)|g' -e 's|@DEPTOOL_REV@|$(DEPTOOL_REV)|g' $*.in > $*.tmp
+	mv $*.tmp $*.last
 
 clean:
 	rm -f $(SCRIPTS)
 
 distclean: clean
 
-install: | $(PREFIX)
-	install -m 755 $(SCRIPTS) $(PREFIX)/
+install: | $(PREFIX)/bin
+	install -m 755 $(SCRIPTS) $(PREFIX)/bin
 
-$(PREFIX):
-	install -d $(PREFIX)
+$(PREFIX)/bin:
+	install -d -m 755 $(PREFIX)/bin
 
 check: check-tests check-examples
 
@@ -63,5 +71,7 @@ check-tests: all
 
 check-examples: all
 	examples/run_all_examples.sh
+
+.FORCE:
 
 .PHONY: all clean distclean install check check-tests check-examples

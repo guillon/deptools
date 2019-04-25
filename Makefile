@@ -66,10 +66,10 @@ $(PREFIX)/bin:
 
 check: check-tests check-examples
 
-check-tests: all
+check-tests:
 	deptools/test.sh
 
-check-examples: all
+check-examples:
 	examples/run_all_examples.sh
 
 .FORCE:

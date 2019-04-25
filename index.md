@@ -1,0 +1,131 @@
+
+# Synopsis
+
+The deptools utilities provide a simple source dependency scheme for
+managing a multiple components project.
+
+The list of components is stored in a simple _DEPENDENCIES_ file at the
+root of the parent component.
+
+A _dependencies_ script stored at the root of the component is in charge of
+interpreting the list of dependencies.
+
+The components may be hosted in distinct repositories and repository formats.  
+
+The only requirements for starting a project are thus:
+* the dependencies script (https://buildhive.cloudbees.com/job/guillon/job/deptools/ws/dependencies)
+* a well formed _DEPENDENCIES_ specification (ref to the example below).
+
+# Example
+
+For instance here is a specification for the head branch of the deptools
+project components, including the sources tree and the GitHub project pages:
+
+    $ cd deptools-all
+    $ cat DEPENDENCIES
+    configurations:
+      default: [ dep-tools, gh-pages ]
+    repositories:
+      dep-tools:
+        format: git
+        repos: https://github.com/guillon/deptools.git
+        label: master
+        alias: dep-tools
+      gh-pages:
+        format: git
+        repos: https://github.com/guillon/deptools.git
+        label: gh-pages
+
+The `dependencies` script that can be stored with the components
+description is used to extract the components:
+
+    $ cd deptools-all
+    $ ./dependencies extract
+    Cloning into 'deptools'  # This is actually a dependency of the ./dependencies script itself
+    Cloning into 'dep-tools' # This is the first component described in the default configuration
+    Cloning into 'gh-pages'  # This is the second component
+
+The actual manifest for a specific version of the components is obtained
+for instance with:
+
+    $ ./dependencies dump_actual | tee MANIFEST-v0.1
+    configurations:
+      default: [dep-tools, gh-pages]
+    repositories:
+      dep-tools: {alias: dep-tools, format: git, label: master, repos: 'https://github.com/guillon/deptools.git',
+        revision: 8c4045382b170ae6b21d6ca4544b8f28c20cd40a}
+      gh-pages: {format: git, label: gh-pages, repos: 'https://github.com/guillon/deptools.git',
+        revision: d7489431c04960efe3080e8a49578381266926c5}
+ 
+It can be stored in the deptools-all project for latter extraction:
+
+    $ cd deptools-all
+    $ ./dependencies extract -f MANIFEST-v0.1
+
+For projects with strict management of components revision, the `DEPENDENCIES` file
+should actually always contain the revision of each component. Updating a component
+to a new revision implies also a new revision for the project. Indeed, the
+`DEPENDENCIES` file has to be updated and commited. In this case the `DEPENDENCIES`
+files acts as an always up-to-date manifest.
+
+# Features
+
+The supported repositories formats are implemented as plugins to deptools:
+* git: git repository
+* svn: subversion repositories
+* tar: archive file (under development)
+* hg: mercurial (to be tested)
+
+The actions that can be run on each component are for instance:
+* extract: extract components from their respective repositories
+* commit: commit changes
+* update/rebase: update or rebase from the origin repositories
+* deliver: push back to the origin repositories
+* dump_actual: dumps a manifest with actual revision that can be in turn used
+as a _DEPENDENCIES_ file
+
+For instance, deptools may help solving source dependencies issues such as:
+* describing that the build of project A depends upon sources of project B
+at revision X in branch B and upon the file F in unique path P,
+* providing a simple command for extracting dependencies of project A, i.e.
+extracting repository B under directory b and file F under filename f,
+* enforcing that the unique revision/label R of source tree A is sufficient
+to uniquely identify A and all its source dependencies at the right revisions,
+* easily identify, extract, commit, update all components at once,
+* referencing uniformly svn, git, mercurial repositories, or
+ftp, ssh, http URIs.
+
+# Limitations
+
+The deptools utilities do not provide support for:
+* actually building source components and dependencies,
+* installing cache of build results,
+* specifying runtime dependencies between components.
+
+# Related Tools
+
+A number of other tools provide the same kind of services, though the deptools
+utilities aim at being independent of the components repositories formats
+which is not the case generally. Tools such as repo or maven2 are well
+suited in homogeneous development environment, but are limited to either a
+specific type of repository or not well suited for source level dependency
+management.
+
+# References
+
+Refer to the INSTALL file for installation (https://github.com/guillon/deptools/blob/master/INSTALL).
+
+Refer to the project home page at:
+http://guillon.github.com/deptools
+
+Refer to the current build and validation status at:
+https://buildhive.cloudbees.com/job/guillon/job/deptools
+
+Fill issues and enhancement request at:
+https://github.com/guillon/deptools/issues
+
+# License
+
+This software is delivered under the terms of the MIT License.
+
+Refer to the LICENSE file: https://github.com/guillon/deptools/blob/master/LICENSE

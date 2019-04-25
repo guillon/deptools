@@ -10,6 +10,7 @@ script:
   - make DEBUG=1 check
   - make install PREFIX=deploy
 deploy:
+  skip_cleanup: true
   provider: releases
   api_key:
     secure: oJP6YaEUq62IuaJGl5ni4UXBYhCLKC5PzH7im7zNZCjnrmz0/BNy7n8ocxxUu3VzBUC2HMkWn/+5gA97EcbBmHSBNrg/AJP82FNsFUVEPIwhirdt5Q9FjiYGmrfMMHJdGscxbCMkyxq8huvsH+d8Q9GMvwlnXfuLsxbhfJ4prNU=

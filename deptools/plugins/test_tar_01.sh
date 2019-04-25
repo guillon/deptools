@@ -84,6 +84,11 @@ $TEST ${tmpbase}.1.ser dump
 $TEST ${tmpbase}.1.ser list
 $TEST ${tmpbase}.1.ser execute cat afile
 
+# Check ssh to self host or skip
+has_ssh=true
+ssh -oBatchMode=yes localhost true </dev/null 2>/dev/null || has_ssh=false
+
+if $has_ssh; then
 # Prepare dependency spec
 sum=`sha1sum ${cwd}/${tmpbase}.1.work/bfile.tgz | cut -f1 -d' '`
 cat >${tmpbase}.2.dep <<EOF
@@ -110,6 +115,7 @@ $TEST ${tmpbase}.2.ser update
 $TEST ${tmpbase}.2.ser commit
 $TEST ${tmpbase}.2.ser rebase
 $TEST ${tmpbase}.2.ser deliver
+fi
 
 # Notify success
 echo SUCCESS

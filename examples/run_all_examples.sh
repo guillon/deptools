@@ -16,7 +16,7 @@ test_gnb="test-gnb1 test-gnb2 test-gnb3 test-gnb4"
 dir=`dirname $0`
 host=`hostname`
 case $host in
-    gnx*) domain=gnb
+    gnx*|gnb*) domain=gnb
 	;;
     *) domain=""
 esac

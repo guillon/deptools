@@ -1,24 +1,24 @@
 configurations:
   default:
-    - google_testsuite
-    - google_testsuite_tools
+    - HelloWorld
+    - yap
 links:
-  google_testsuite:
-    dst_location: google_testsuite
+  HelloWorld:
+    dst_location: HelloWorld
     src_location: !!null
-  google_testsuite_tools:
-    dst_location: google_testsuite_tools
+  yap:
+    dst_location: yap
     src_location: !!null
 repositories:
-  google_testsuite:
+  HelloWorld:
     format: git
     label: master
-    repos: /prj/compwork/guillon/pub/git/google_testsuite.git
+    repos: /prj/compwork/projects/deptools/git-mirrors/HelloWorld.git
     revision: HEAD
     alias:
-  google_testsuite_tools:
+  yap:
     format: git
-    repos: /prj/compwork/guillon/pub/git/google_testsuite_tools.git
+    repos: /prj/compwork/projects/deptools/git-mirrors/yap.git
 variables:
   - top_repos
   - top_branch

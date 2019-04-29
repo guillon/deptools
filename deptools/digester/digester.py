@@ -1,7 +1,7 @@
 #
 # Copyright (C) STMicroelectronics Ltd. 2012
 #
-# Licensed under the MIT licence: 
+# Licensed under the MIT licence:
 #
 # Permission is hereby granted, free of charge, to any person
 # obtaining a copy of this software and associated documentation
@@ -25,6 +25,8 @@
 # OTHER DEALINGS IN THE SOFTWARE.
 #
 
+from __future__ import print_function
+
 import os
 import sys
 import hashlib
@@ -43,7 +45,7 @@ class digester:
                  }
         for key, value in kwargs.items():
             if key not in args:
-                raise Exception("unexpeted kwargs key: %s" % key)
+                raise Exception("unexpected kwargs key: %s" % key)
             args[key] = value
         self.block_size_ = args['block_size']
         self.output_ = args['stdout']
@@ -65,14 +67,14 @@ class digester:
     def digest_file_(self, path):
         try:
             if self.digest_content_:
-                with open(path) as f:
-                    print >>self.output_, "F %s %s" % (self.digest_file_content_(f), path)
+                with open(path, "rb") as f:
+                    print("F %s %s" % (self.digest_file_content_(f), path), file=self.output_)
             else:
-                print >>self.output_, "F %d %s" % (os.path.getsize(path), path)
-        except IOError, e:
+                print("F %d %s" % (os.path.getsize(path), path), file=self.output_)
+        except IOError as e:
             e.filename = path
             return self.report_exc_(e, "can't read file")
-        except OSError, e:
+        except OSError as e:
             e.filename = path
             return self.report_exc_(e, "can't access file")
         return 0
@@ -81,23 +83,23 @@ class digester:
         try:
             link = os.readlink(path)
             if self.digest_content_:
-                print >>self.output_, "L %s %s" % (hashlib.sha1(link).hexdigest(), path)
+                print("L %s %s" % (hashlib.sha1(link).hexdigest(), path), file=self.output_)
             else:
-                print >>self.output_, "L %d %s" % (len(link), path)
-        except OSError, e:
+                print("L %d %s" % (len(link), path), file=self.output_)
+        except OSError as e:
             e.filename = path
             return self.report_exc_(e, "can't open link")
         return 0
 
     def digest_special_(self, path):
         if self.digest_content_:
-            print >>self.output_, "S %s %s" % (hashlib.sha1("").hexdigest(), path)
+            print("S %s %s" % (hashlib.sha1("").hexdigest(), path), file=self.output_)
         else:
-            print >>self.output_, "S %s" % path
+            print("S %s" % path, file=self.output_)
         return 0
 
     def error_(self, msg):
-        print >>self.stderr_, "%s: %s" % (os.path.basename(sys.argv[0]), msg)
+        print("%s: %s" % (os.path.basename(sys.argv[0]), msg), file=self.stderr_)
         return 1
 
     def report_error_(self, msg):
@@ -155,7 +157,8 @@ class digester:
         return 0 if self.ignore_errors_ else retcode
 
     def digest_paths(self, paths):
-        list_file = tempfile.TemporaryFile()
+        list_file = tempfile.NamedTemporaryFile("w", delete=False)
+        list_file_name = list_file.name
         retcode = digester(block_size = self.block_size_,
                            ignore_errors = self.ignore_errors_,
                            digest_content = self.digest_content_,
@@ -163,5 +166,9 @@ class digester:
                            stderr = self.stderr_).digest_list(paths)
         if retcode != 0 and not self.ignore_errors_:
             self.report_error_("error when computing digest list, the final digest will be inaccurate")
-        list_file.seek(0)
-        return self.digest_file_content_(list_file)
+        list_file.close()
+        list_file = open(list_file_name, "rb")
+        res = self.digest_file_content_(list_file)
+        list_file.close()
+        os.remove(list_file_name)
+        return res

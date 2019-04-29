@@ -35,6 +35,13 @@ error() {
     exit 1
 }
 
+do_test() {
+    echo "## ------------------------------------------------------------"
+    echo "## $*"
+    echo "## ------------------------------------------------------------"
+    $TEST $*
+}
+
 user=${USER}
 hostname=`hostname`
 dir=`dirname $0`
@@ -97,32 +104,32 @@ EOF
 $TEST ${tmpbase}.4.ser new ${tmpbase}.4.dep
 
 # A deptools session
-$TEST ${tmpbase}.1.ser extract
-$TEST ${tmpbase}.1.ser extract # second extract should be ok
-$TEST ${tmpbase}.1.ser dump_actual
-$TEST ${tmpbase}.1.ser dump_head
-$TEST ${tmpbase}.1.ser dump
-$TEST ${tmpbase}.1.ser list
-$TEST ${tmpbase}.1.ser execute cat afile
-$TEST ${tmpbase}.2.ser extract
-$TEST ${tmpbase}.2.ser extract_or_updt
-$TEST ${tmpbase}.2.ser dump_actual
-$TEST ${tmpbase}.2.ser list
-$TEST ${tmpbase}.3.ser extract
-$TEST ${tmpbase}.3.ser extract_or_updt
-$TEST ${tmpbase}.3.ser dump_actual
-$TEST ${tmpbase}.3.ser list
-$TEST ${tmpbase}.4.ser list
-$TEST ${tmpbase}.4.ser extract
-$TEST ${tmpbase}.4.ser extract_or_updt
-$TEST ${tmpbase}.4.ser dump_actual
-$TEST ${tmpbase}.4.ser list
+do_test ${tmpbase}.1.ser extract
+do_test ${tmpbase}.1.ser extract # second extract should be ok
+do_test ${tmpbase}.1.ser dump_actual
+do_test ${tmpbase}.1.ser dump_head
+do_test ${tmpbase}.1.ser dump
+do_test ${tmpbase}.1.ser list
+do_test ${tmpbase}.1.ser execute cat afile
+do_test ${tmpbase}.2.ser extract
+do_test ${tmpbase}.2.ser extract_or_updt
+do_test ${tmpbase}.2.ser dump_actual
+do_test ${tmpbase}.2.ser list
+do_test ${tmpbase}.3.ser extract
+do_test ${tmpbase}.3.ser extract_or_updt
+do_test ${tmpbase}.3.ser dump_actual
+do_test ${tmpbase}.3.ser list
+do_test ${tmpbase}.4.ser list
+do_test ${tmpbase}.4.ser extract
+do_test ${tmpbase}.4.ser extract_or_updt
+do_test ${tmpbase}.4.ser dump_actual
+do_test ${tmpbase}.4.ser list
 
 # No op operations
-$TEST ${tmpbase}.4.ser update
-$TEST ${tmpbase}.4.ser commit
-$TEST ${tmpbase}.4.ser rebase
-$TEST ${tmpbase}.4.ser deliver
+do_test ${tmpbase}.4.ser update
+do_test ${tmpbase}.4.ser commit
+do_test ${tmpbase}.4.ser rebase
+do_test ${tmpbase}.4.ser deliver
 
 # Notify success
 echo SUCCESS

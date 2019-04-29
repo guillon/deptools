@@ -25,6 +25,8 @@
 # OTHER DEALINGS IN THE SOFTWARE.
 #
 
+from __future__ import print_function
+
 from subprocess import call, check_call, Popen, PIPE
 from plugins import SourceManager
 import os, sys, hashlib, shutil
@@ -46,7 +48,7 @@ class GitManager(SourceManager):
     """
     plugin_name_ = "git"
     plugin_description_ = "git repository manager"
-    
+
     def __init__(self, name, component, config = GitConfig()):
         self.name_ = name
         self.config = config
@@ -54,7 +56,7 @@ class GitManager(SourceManager):
 
         # Check mandatory fields
         if 'repos' not in component:
-            raise Exception, "missing repository url in component"
+            raise Exception("missing repository url in component")
         self.repos = str(component['repos'])
 
         # Initialise plugin from available fields
@@ -78,24 +80,24 @@ class GitManager(SourceManager):
 
     def _cmd(self, args):
         if self.config.verbose:
-            print " ".join(args)
+            print(" ".join(args))
         check_call(args)
 
     def _cmd_output(self, args):
         if self.config.verbose:
-            print " ".join(args)
+            print(" ".join(args))
         return Popen(args, stdout=PIPE).communicate()[0]
-    
+
     def _subcmd(self, args):
         if not os.path.exists(self.basename):
-            raise Exception, "path does not exist: " + self.basename
+            raise Exception("path does not exist: " + self.basename)
         os.chdir(self.basename)
         self._cmd(args)
         os.chdir(self.cwd)
 
     def _subcmd_output(self, args):
         if not os.path.exists(self.basename):
-            raise Exception, "path does not exist: " + self.basename
+            raise Exception("path does not exist: " + self.basename)
         os.chdir(self.basename)
         output = self._cmd_output(args)
         os.chdir(self.cwd)
@@ -110,7 +112,7 @@ class GitManager(SourceManager):
         return dir
 
     def _get_cached_repo(self):
-        repo_sha1sum = hashlib.sha1(self.repos).hexdigest()
+        repo_sha1sum = hashlib.sha1(self.repos.encode()).hexdigest()
         repo_basename = os.path.basename(self.repos)
         if not repo_basename.endswith(".git"):
             repo_basename += ".git"
@@ -139,32 +141,32 @@ class GitManager(SourceManager):
         return self.name_
 
     def execute(self, args):
-        print "Executing command for component in '" + self.basename + "'"
+        print("Executing command for component in '" + self.basename + "'")
         self._subcmd(args)
 
     def extract(self, args = []):
         if os.path.exists(self.basename) and "--force" in args:
-            print "Removing directory '" + self.basename + "'"
+            print("Removing directory '" + self.basename + "'")
             shutil.rmtree(self.basename)
         if not os.path.exists(self.basename):
-            print "Extracting component in '" + self.basename + "'"
+            print("Extracting component in '" + self.basename + "'")
             try:
                 self._fetch_cached_repo()
                 self._cmd([self.config.git, 'clone', '--reference', self._get_cached_repo(),
                            '-b', self.label, self.repos, self.basename])
                 self._subcmd([self.config.git, 'reset', '--hard', self.revision])
-            except Exception, e:
-                raise Exception, "cannot clone component: " + str(e)
+            except Exception as e:
+                raise Exception("cannot clone component: " + str(e))
         else:
-            print "Skipping extraction of component in '" + self.basename + "'"
+            print("Skipping extraction of component in '" + self.basename + "'")
 
     def update(self, args = []):
-        print "Updating component in '" + self.basename + "'"
+        print("Updating component in '" + self.basename + "'")
         try:
             self._fetch_cached_repo()
             self._subcmd([self.config.git, 'pull', '--ff-only'])
-        except Exception, e:
-            raise Exception, "cannot update component: " + str(e)
+        except Exception as e:
+            raise Exception("cannot update component: " + str(e))
 
     def extract_or_updt(self, args = []):
         if not os.path.exists(self.basename):
@@ -173,38 +175,41 @@ class GitManager(SourceManager):
             self.update(args)
 
     def commit(self, args = []):
-        print "Commiting component in '" + self.basename + "'"
+        print("Commiting component in '" + self.basename + "'")
         try:
             self._subcmd([self.config.git, 'commit' ] + args)
-        except Exception, e:
-            raise Exception, "cannot commit component: " + str(e)
+        except Exception as e:
+            raise Exception("cannot commit component: " + str(e))
 
     def rebase(self, args = []):
-        print "Rebasing component in '" + self.basename + "'"
+        print("Rebasing component in '" + self.basename + "'")
         try:
             self._fetch_cached_repo()
             self._subcmd([self.config.git, 'pull', '--rebase'])
-        except Exception, e:
-            raise Exception, "cannot rebase component: " + str(e)
+        except Exception as e:
+            raise Exception("cannot rebase component: " + str(e))
 
     def deliver(self, args = []):
-        print "Delivering component in '" + self.basename + "'"
+        print("Delivering component in '" + self.basename + "'")
         try:
             self._fetch_cached_repo()
             self._subcmd([self.config.git, '-c', 'push.default=upstream', 'push'])
-        except Exception, e:
-            raise Exception, "cannot deliver component: " + str(e)
+        except Exception as e:
+            raise Exception("cannot deliver component: " + str(e))
 
     def dump(self, args = []):
         if self.config.verbose:
-            print "Dump " + self.basename
-        print yaml.dump(self.component)
+            print("Dump " + self.basename)
+        print(yaml.dump(self.component, default_flow_style=True))
 
     def get_actual_revision(self):
         try:
-            revision = self._subcmd_output([self.config.git, 'rev-parse', 'HEAD']).strip()
-        except Exception, e:
-            raise Exception, "cannot get actual revision: " + str(e)
+            if sys.version_info[0] == 2:
+                revision = self._subcmd_output([self.config.git, 'rev-parse', 'HEAD']).strip()
+            else:
+                revision = self._subcmd_output([self.config.git, 'rev-parse', 'HEAD']).strip().decode()
+        except Exception as e:
+            raise Exception("cannot get actual revision: " + str(e))
         return revision
 
     def get_head_revision(self):
@@ -212,26 +217,26 @@ class GitManager(SourceManager):
 
     def dump_actual(self, args = []):
         if self.config.verbose:
-            print "Dump_actual " + self.basename
+            print("Dump_actual " + self.basename)
         actual = self.component.copy()
         actual['revision'] = self.get_actual_revision()
-        print yaml.dump(actual)
+        print(yaml.dump(actual, default_flow_style=True))
 
     def dump_head(self, args = []):
         if self.config.verbose:
-            print "Dump_head " + self.basename
+            print("Dump_head " + self.basename)
         actual = self.component.copy()
         actual['revision'] = self.get_head_revision()
-        print yaml.dump(actual)
+        print(yaml.dump(actual, default_flow_style=True))
 
     def list(self, args = []):
         if self.config.verbose:
-            print "List " + self.basename
-        print self.name_ + "," + self.label + "@" + self.revision +  "," + self.repos + "," + self.alias
+            print("List " + self.basename)
+        print(self.name_ + "," + self.label + "@" + self.revision +  "," + self.repos + "," + self.alias)
 
 
 class GitManagerCmdLine:
-    """ This is a comand line class proxy for the GitManager class.
+    """ This is a command line class proxy for the GitManager class.
     The principle is to maintain a serial file for the GitManager object
     and apply internal method to the deserialized file, then serialize
     the object back to file.
@@ -250,28 +255,28 @@ class GitManagerCmdLine:
 
     @staticmethod
     def error(msg):
-        print >>sys.stderr, sys.argv[0] + ": error: "+ msg
+        print(sys.argv[0] + ": error: "+ msg, file=sys.stderr)
         sys.exit(1)
 
     def _serialize_manager(self, manager, ostream = sys.stdout):
-        print >> ostream, yaml.dump(manager)
+        print(yaml.dump(manager, default_flow_style=True), file=ostream)
 
     def _deserialize_manager(self, istream = sys.stdin):
-        return yaml.load(istream)
+        return yaml.unsafe_load(istream)
 
     def _new_session(self, args_serials):
         try:
             params_stream = open(args_serials[0], "r")
-        except IOError, e:
+        except IOError as e:
             self.error("can't open serial: " + str(e))
         with params_stream:
-            params = yaml.load(params_stream)
+            params = yaml.unsafe_load(params_stream)
         self._manager = GitManager(params['name'], params['component'])
 
     def _store_session(self):
         try:
             ofile = open(self._serial, "w")
-        except IOError, e:
+        except IOError as e:
             self.error("can't write serial: " + str(e))
         with ofile:
             self._serialize_manager(self._manager, ofile)
@@ -279,7 +284,7 @@ class GitManagerCmdLine:
     def _restore_session(self):
         try:
             ifile = open(self._serial, "r")
-        except IOError, e:
+        except IOError as e:
             self.error("can't open serial: " + str(e))
         with ifile:
             self._manager = self._deserialize_manager(ifile)
@@ -303,7 +308,7 @@ class GitManagerCmdLine:
             if cmd_name in dispatch:
                 dispatch[cmd_name](args)
             else:
-                print "unexpected command, ignored: " + cmd_name + " ".join(args)
+                print("unexpected command, ignored: " + cmd_name + " ".join(args))
         self._store_session()
 
 if __name__ == "__main__":
@@ -312,4 +317,4 @@ if __name__ == "__main__":
     GitManagerCmdLine(sys.argv[1:])
 else:
     if verbose == 1:
-        print "Loading " + __name__         
+        print("Loading " + __name__)

@@ -25,6 +25,8 @@
 # OTHER DEALINGS IN THE SOFTWARE.
 #
 
+from __future__ import print_function
+
 from subprocess import call
 from subprocess import check_call
 from subprocess import Popen, PIPE
@@ -48,7 +50,7 @@ class SvnManager(SourceManager):
     """
     plugin_name_ = "svn"
     plugin_description_ = "svn repository manager"
-    
+
     def __init__(self, name, component, config = SvnConfig()):
         self.name_ = name
         self.component = component
@@ -66,24 +68,24 @@ class SvnManager(SourceManager):
 
     def _cmd(self, args):
         if self.config.verbose:
-            print " ".join(args)
+            print(" ".join(args))
         check_call(args)
 
     def _cmd_output(self, args):
         if self.config.verbose:
-            print " ".join(args)
+            print(" ".join(args))
         return Popen(args, stdout=PIPE).communicate()[0]
 
     def _subcmd(self, args):
         if not os.path.exists(self.basename):
-            raise Exception, "path does not exist: " + self.basename
+            raise Exception("path does not exist: " + self.basename)
         os.chdir(self.basename)
         self._cmd(args)
         os.chdir(self.cwd)
 
     def _subcmd_output(self, args):
         if not os.path.exists(self.basename):
-            raise Exception, "path does not exist: " + self.basename
+            raise Exception("path does not exist: " + self.basename)
         os.chdir(self.basename)
         output = self._cmd_output(args)
         os.chdir(self.cwd)
@@ -94,72 +96,76 @@ class SvnManager(SourceManager):
 
     def execute(self, args):
         if self.config.verbose:
-            print "Execute " + self.basename
+            print("Execute " + self.basename)
         self._subcmd(args)
 
     def extract(self, args = []):
         if self.config.verbose:
-            print "Clone " + self.basename
+            print("Clone " + self.basename)
         try:
             if os.path.exists(self.basename):
-                print "Cannot extract component " +  self.name_ + ", path exists: " + self.basename + ". Skipped."
+                print("Cannot extract component " +  self.name_ + ", path exists: " + self.basename + ". Skipped.")
                 return
             self._cmd([self.config.svn, 'checkout', self.component['repos'] + "/" + self.branch + "@" + str(self.component['revision']), self.basename])
-        except Exception, e:
-            raise Exception, "cannot clone component: " + str(e)
-        
+        except Exception as e:
+            raise Exception("cannot clone component: " + str(e))
+
     def extract_or_updt(self, args = []):
         if self.config.verbose:
-            print "Clone " + self.basename
+            print("Clone " + self.basename)
         try:
             if os.path.exists(self.basename):
                 self._subcmd([self.config.svn, 'update', '-r', str(self.component['revision'])])
                 return
             self._cmd([self.config.svn, 'checkout', self.component['repos'] + "/" + self.branch + "@" + str(self.component['revision']), self.basename])
-        except Exception, e:
-            raise Exception, "cannot clone component: " + str(e)
-        
+        except Exception as e:
+            raise Exception("cannot clone component: " + str(e))
+
     def update(self, args = []):
         if self.config.verbose:
-            print "Update " + self.basename
+            print("Update " + self.basename)
         try:
             self._subcmd([self.config.svn, 'update', '-r', str(self.component['revision'])])
-        except Exception, e:
-            raise Exception, "cannot update component: " + str(e)
+        except Exception as e:
+            raise Exception("cannot update component: " + str(e))
 
     def commit(self, args = []):
         if self.config.verbose:
-            print "Commit " + self.basename
+            print("Commit " + self.basename)
         try:
             self._subcmd([self.config.svn, 'commit' ] + args)
-        except Exception, e:
-            raise Exception, "cannot commit component: " + str(e)
+        except Exception as e:
+            raise Exception("cannot commit component: " + str(e))
 
     def rebase(self, args = []):
         if self.config.verbose:
-            print "Rebase " + self.basename
-        raise Exception, "svn format does not support rebase in subdir " + self.basename
+            print("Rebase " + self.basename)
+        raise Exception("svn format does not support rebase in subdir " + self.basename)
 
     def deliver(self, args = []):
         if self.config.verbose:
-            print "Deliver " + self.basename
-        raise Exception, "svn format does not support deliver in subdir " + self.basename
+            print("Deliver " + self.basename)
+        raise Exception("svn format does not support deliver in subdir " + self.basename)
 
     def dump(self, args = []):
         if self.config.verbose:
-            print "Dump " + self.basename
-        print yaml.dump(self.component)
+            print("Dump " + self.basename)
+        print(yaml.dump(self.component, default_flow_style=True))
 
     def get_actual_revision(self):
         try:
             self._subcmd_output([self.config.svn, 'update'])
-            revision_str = self._subcmd_output(
-                [self.config.svn, 'info', '-r', 'HEAD'])
+            if sys.version_info[0] == 2:
+                revision_str = self._subcmd_output(
+                    [self.config.svn, 'info', '-r', 'HEAD'])
+            else:
+                revision_str = self._subcmd_output(
+                    [self.config.svn, 'info', '-r', 'HEAD']).decode('utf-8')
             revision_obj = re.search(
                 '^Revision: ([0-9]*)$', revision_str, re.MULTILINE)
             revision = revision_obj.group(1)
-        except Exception, e:
-            raise Exception, "cannot get actual revision: " + str(e)
+        except Exception as e:
+            raise Exception("cannot get actual revision: " + str(e))
         return revision
 
     def get_head_revision(self):
@@ -167,26 +173,26 @@ class SvnManager(SourceManager):
 
     def dump_actual(self, args = []):
         if self.config.verbose:
-            print "Dump_actual " + self.basename
+            print("Dump_actual " + self.basename)
         actual = self.component
         actual['revision'] = self.get_actual_revision()
-        print yaml.dump(actual)
+        print(yaml.dump(actual, default_flow_style=True))
 
     def dump_head(self, args = []):
         if self.config.verbose:
-            print "Dump_head " + self.basename
+            print("Dump_head " + self.basename)
         actual = self.component
         actual['revision'] = self.get_head_revision()
-        print yaml.dump(actual)
+        print(yaml.dump(actual, default_flow_style=True))
 
     def list(self, args = []):
         if self.config.verbose:
-            print "List " + self.basename
+            print("List " + self.basename)
         if self.component['alias'] != None:
             alias_str = "," + self.component['alias']
         else:
             alias_str = ""
-        print self.name_ + "," + self.component['label'] + "@" + str(self.component['revision']) +  "," + self.component['repos'] + alias_str
+        print(self.name_ + "," + self.component['label'] + "@" + str(self.component['revision']) +  "," + self.component['repos'] + alias_str)
 
 
 class SvnManagerCmdLine:
@@ -208,14 +214,14 @@ class SvnManagerCmdLine:
         self._exec_cmd(args[1], args[2:])
 
     def _serialize_manager(self, manager, ostream = sys.stdout):
-        print >> ostream, yaml.dump(manager)
+        print(yaml.dump(manager, default_flow_style=True), file=ostream)
 
     def _deserialize_manager(self, istream = sys.stdin):
-        return yaml.load(istream)
+        return yaml.unsafe_load(istream)
 
     def _new_session(self, args_serials):
         params_stream = open(args_serials[0], "r")
-        params = yaml.load(params_stream)
+        params = yaml.unsafe_load(params_stream)
         self._manager = SvnManager(params['name'], params['component'])
 
     def _store_session(self):
@@ -254,11 +260,11 @@ class SvnManagerCmdLine:
             elif cmd_name == "list":
                 self._manager.list(args)
             else:
-                print "unexpected command: ignored: " + " ".join(args)
+                print("unexpected command: ignored: " + " ".join(args))
         self._store_session()
 
 if __name__ == "__main__":
     SvnManagerCmdLine(sys.argv[1:])
 else:
     if verbose == 1:
-        print "Loading " + __name__         
+        print("Loading " + __name__)

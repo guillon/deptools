@@ -37,7 +37,7 @@
 # - if no scheme is given, the file:// scheme is assumed
 #
 # The file type must be one of:
-# - .tar: a bare tar archive 
+# - .tar: a bare tar archive
 # - .tar.gz, .tgz: a tar+gzip archive
 # - .tar.bz2: a tar+bzip2 archive
 # - .tar.xz: a tar.xz archive
@@ -53,7 +53,9 @@
 #   of the archive extraction, useful for some tar archives with
 #   special files that can't be created but are useless.
 #
- 
+
+from __future__ import print_function
+
 from subprocess import call, check_call, Popen, PIPE
 from plugins import SourceManager
 import os, sys
@@ -202,7 +204,7 @@ class utils:
         for y in dirs:
             for file in os.listdir(join(srcdir,y)):
                 if os.path.exists(join(dstdir, file)):
-                    raise Exception, "File exists " + join(dstdir, file)
+                    raise Exception("File exists " + join(dstdir, file))
                 os.rename(join(srcdir, y, file), join(dstdir, file))
 
 class TarManager(SourceManager):
@@ -237,25 +239,25 @@ class TarManager(SourceManager):
         self.path = uri.path()
         self.ignore_status = component.get("ignore_status", False)
         if type(self.ignore_status) != type(True):
-            raise Exception, "ignore_status field must be either 'true' or 'false'"
+            raise Exception("ignore_status field must be either 'true' or 'false'")
         self.skip_dirs = component.get("skip_dirs", 0)
         if type(self.skip_dirs) != type(0) or self.skip_dirs < 0:
-            raise Exception, "skip_dirs field must be a positive integer"
+            raise Exception("skip_dirs field must be a positive integer")
         self.cwd = os.getcwd()
 
     def _cmd(self, args, ignore_status=False):
         if self.config.verbose:
-            print " ".join(args)
+            print(" ".join(args))
         status = call(args)
         if not ignore_status and status != 0:
-            raise Exception, ("command returned non-zero status " + str(status) +
+            raise Exception("command returned non-zero status " + str(status) +
                               ": " + " ".join(["'"+x+"'" for x in args]))
 
     def _cmd_output(self, args):
         if self.config.verbose:
-            print " ".join(args)
+            print(" ".join(args))
         return Popen(args, stdout=PIPE).communicate()[0]
-    
+
     def _subcmd(self, args, ignore_status=True):
         if not os.path.exists(self.basename):
             raise Exception("path does not exist: " + self.basename)
@@ -280,7 +282,7 @@ class TarManager(SourceManager):
         return dir
 
     def _get_cached_archive(self):
-        repo_sha1sum = hashlib.sha1(self.repos).hexdigest()
+        repo_sha1sum = hashlib.sha1(self.repos.encode()).hexdigest()
         repo_basename = os.path.basename(self.repos)
         return os.path.join(self._get_cachedir(),
                             repo_sha1sum[:2],
@@ -296,7 +298,7 @@ class TarManager(SourceManager):
         if not os.path.exists(tmpdir):
             os.makedirs(tmpdir)
         return tempfile.mkdtemp(dir=tmpdir)
-            
+
     def _fetch_archive(self):
         cached_archive = self._get_cached_archive()
         if (self.revision != "HEAD" and os.path.exists(cached_archive) and
@@ -310,7 +312,7 @@ class TarManager(SourceManager):
             else:
                 self._cmd([self.config.curl] + self.config.curl_options +
                           [ "-o", cached_archive, self.uri])
-        except Exception, e:
+        except Exception as e:
             raise Exception("cannot acces remote URI: " + self.repos + ": " + str(e))
 
     def _check_revision(self):
@@ -348,36 +350,36 @@ class TarManager(SourceManager):
         finally:
             if os.path.exists(tmpdir):
                 shutil.rmtree(tmpdir)
-            
+
     def name(self):
         return self.name_
 
     def execute(self, args):
         if self.config.verbose:
-            print "Execute " + self.basename
+            print("Execute " + self.basename)
         self._subcmd(args)
 
     def extract(self, args = []):
         if self.config.verbose:
-            print "Extract " + self.basename
+            print("Extract " + self.basename)
         if not os.path.exists(self.basename):
             try:
                 self._fetch_archive()
                 self._check_revision()
                 self._extract_archive()
-            except Exception, e:
+            except Exception as e:
                 raise Exception("cannot extract component: " + str(e))
         else:
-            print "Skipping extraction of existing '" + self.basename + "'"
+            print("Skipping extraction of existing '" + self.basename + "'")
 
     def update(self, args = []):
         if self.config.verbose:
-            print "Update " + self.basename
-        print "Update " + self.basename + ": nothing to do for archive"
+            print("Update " + self.basename)
+        print("Update " + self.basename + ": nothing to do for archive")
 
     def extract_or_updt(self, args = []):
         if self.config.verbose:
-            print "Extract or update " + self.basename
+            print("Extract or update " + self.basename)
         if not os.path.exists(self.basename):
             self.extract(args)
         else:
@@ -385,52 +387,55 @@ class TarManager(SourceManager):
 
     def commit(self, args = []):
         if self.config.verbose:
-            print "Commit " + self.basename
-        print "Commit " + self.basename + ": nothing to do for archive"
+            print("Commit " + self.basename)
+        print("Commit " + self.basename + ": nothing to do for archive")
 
     def rebase(self, args = []):
         if self.config.verbose:
-            print "Rebase " + self.basename
-        print "Rebase " + self.basename + ": nothing to do for archive"
+            print("Rebase " + self.basename)
+        print("Rebase " + self.basename + ": nothing to do for archive")
 
     def deliver(self, args = []):
         if self.config.verbose:
-            print "Deliver " + self.basename
-        print "Deliver " + self.basename + ": nothing to do for archive"
+            print("Deliver " + self.basename)
+        print("Deliver " + self.basename + ": nothing to do for archive")
 
     def dump(self, args = []):
         if self.config.verbose:
-            print "Dump " + self.basename
-        print yaml.dump(self.component)
+            print("Dump " + self.basename)
+        print(yaml.dump(self.component, default_flow_style=True))
 
     def get_actual_revision(self):
         try:
             output = self._cmd_output([self.config.sha1sum, self._get_cached_archive()])
-        except Exception, e:
+        except Exception as e:
             raise Exception("cannot get actual revision: " + str(e))
-        return output.strip().split(" ")[0]
+        if sys.version_info[0] == 2:
+            return output.strip().split(" ")[0]
+        else:
+            return output.decode().strip().split(" ")[0]
 
     def get_head_revision(self):
         return "HEAD"
 
     def dump_actual(self, args = []):
         if self.config.verbose:
-            print "Dump_actual " + self.basename
+            print("Dump_actual " + self.basename)
         actual = self.component.copy()
         actual['revision'] = self.get_actual_revision()
-        print yaml.dump(actual)
+        print(yaml.dump(actual, default_flow_style=True))
 
     def dump_head(self, args = []):
         if self.config.verbose:
-            print "Dump_head " + self.basename
+            print("Dump_head " + self.basename)
         actual = self.component.copy()
         actual['revision'] = self.get_head_revision()
-        print yaml.dump(actual)
+        print(yaml.dump(actual, default_flow_style=True))
 
     def list(self, args = []):
         if self.config.verbose:
-            print "List " + self.basename
-        print self.name_ + "," + self.revision +  "," + self.repos + "," + self.alias
+            print("List " + self.basename)
+        print(self.name_ + "," + self.revision +  "," + self.repos + "," + self.alias)
 
 
 class TarManagerCmdLine:
@@ -453,28 +458,28 @@ class TarManagerCmdLine:
 
     @staticmethod
     def error(msg):
-        print >>sys.stderr, sys.argv[0] + ": error: "+ msg
+        print(sys.argv[0] + ": error: "+ msg, file=sys.stderr)
         sys.exit(1)
 
     def _serialize_manager(self, manager, ostream = sys.stdout):
-        print >> ostream, yaml.dump(manager)
+        print(yaml.dump(manager, default_flow_style=True), file=ostream)
 
     def _deserialize_manager(self, istream = sys.stdin):
-        return yaml.load(istream)
+        return yaml.unsafe_load(istream)
 
     def _new_session(self, args_serials):
         try:
             params_stream = open(args_serials[0], "r")
-        except IOError, e:
+        except IOError as e:
             self.error("can't open serial: " + str(e))
         with params_stream:
-            params = yaml.load(params_stream)
+            params = yaml.unsafe_load(params_stream)
         self._manager = TarManager(params['name'], params['component'])
 
     def _store_session(self):
         try:
             ofile = open(self._serial, "w")
-        except IOError, e:
+        except IOError as e:
             self.error("can't write serial: " + str(e))
         with ofile:
             self._serialize_manager(self._manager, ofile)
@@ -482,7 +487,7 @@ class TarManagerCmdLine:
     def _restore_session(self):
         try:
             ifile = open(self._serial, "r")
-        except IOError, e:
+        except IOError as e:
             self.error("can't open serial: " + str(e))
         with ifile:
             self._manager = self._deserialize_manager(ifile)
@@ -506,7 +511,7 @@ class TarManagerCmdLine:
             if cmd_name in dispatch:
                 dispatch[cmd_name](args)
             else:
-                print "unexpected command, ignored: " + cmd_name + " ".join(args)
+                print("unexpected command, ignored: " + cmd_name + " ".join(args))
         self._store_session()
 
 if __name__ == "__main__":
@@ -515,4 +520,4 @@ if __name__ == "__main__":
     TarManagerCmdLine(sys.argv[1:])
 else:
     if verbose == 1:
-        print "Loading " + __name__         
+        print("Loading " + __name__)

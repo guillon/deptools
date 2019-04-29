@@ -25,6 +25,8 @@
 # OTHER DEALINGS IN THE SOFTWARE.
 #
 
+from __future__ import print_function
+
 from subprocess import call
 from subprocess import check_call
 from plugins import SourceManager
@@ -47,7 +49,7 @@ class HgManager(SourceManager):
     """
     plugin_name_ = "hg"
     plugin_description_ = "mercurial repository manager"
-    
+
     def __init__(self, name, component, config = HgConfig()):
         self.name_ = name
         self.component = component
@@ -64,95 +66,95 @@ class HgManager(SourceManager):
 
     def _cmd(self, args):
         if self.config.verbose:
-            print " ".join(args)
+            print(" ".join(args))
         check_call(args)
-    
+
     def _subcmd(self, args):
         if not os.path.exists(self.basename):
-            raise Exception, "path does not exist: " + self.basename
+            raise Exception("path does not exist: " + self.basename)
         os.chdir(self.basename)
         self._cmd(args)
         os.chdir(self.cwd)
-        
+
     def name(self):
         return self.name_
 
     def execute(self, args):
         if self.config.verbose:
-            print "Execute " + self.basename
+            print("Execute " + self.basename)
         self._subcmd(args)
 
     def extract(self, args = []):
         if self.config.verbose:
-            print "Clone " + self.basename
+            print("Clone " + self.basename)
         try:
             if os.path.exists(self.basename):
-                print "Cannot extract component " +  self.name_ + ", path exists: " + self.basename + ". Skipped."
+                print("Cannot extract component " +  self.name_ + ", path exists: " + self.basename + ". Skipped.")
                 return
             self._cmd([self.config.hg, 'clone', self.component['repos']])
-        except Exception, e:
-            raise Exception, "cannot clone component: " + str(e)
-        
+        except Exception as e:
+            raise Exception("cannot clone component: " + str(e))
+
     def update(self, args = []):
         if self.config.verbose:
-            print "Update " + self.basename
+            print("Update " + self.basename)
         try:
             self._subcmd([self.config.hg, 'pull'])
             self._subcmd([self.config.hg, 'update'])
-        except Exception, e:
-            raise Exception, "cannot update component: " + str(e)
+        except Exception as e:
+            raise Exception("cannot update component: " + str(e))
 
     def commit(self, args = []):
         if self.config.verbose:
-            print "Commit " + self.basename
+            print("Commit " + self.basename)
         try:
             self._subcmd([self.config.hg, 'commit' ] + args)
-        except Exception, e:
-            raise Exception, "cannot commit component: " + str(e)
+        except Exception as e:
+            raise Exception("cannot commit component: " + str(e))
 
     def rebase(self, args = []):
         if self.config.verbose:
-            print "Rebase " + self.basename
+            print("Rebase " + self.basename)
         try:
             raise("rebase is not implemented for hg ")
-        except Exception, e:
-            raise Exception, "cannot rebase component: " + str(e)
+        except Exception as e:
+            raise Exception("cannot rebase component: " + str(e))
 
     def deliver(self, args = []):
         if self.config.verbose:
-            print "Deliver " + self.basename
+            print("Deliver " + self.basename)
         try:
             self._subcmd([self.config.hg, 'push', 'origin'])
-        except Exception, e:
-            raise Exception, "cannot deliver component: " + str(e)
+        except Exception as e:
+            raise Exception("cannot deliver component: " + str(e))
 
     def dump(self, args = []):
         if self.config.verbose:
-            print "Dump " + self.basename
-        print yaml.dump(self.component)
+            print("Dump " + self.basename)
+        print(yaml.dump(self.component, default_flow_style=True))
 
     def get_actual_revision(self):
         try:
             self._subcmd([self.config.hg, 'log', '--pretty=oneline', '-n1', 'tip'])
-        except Exception, e:
-            raise Exception, "cannot get actual revision: " + str(e)
+        except Exception as e:
+            raise Exception("cannot get actual revision: " + str(e))
         return "TODO"
 
     def dump_actual(self, args = []):
         if self.config.verbose:
-            print "Dump_actual " + self.basename
+            print("Dump_actual " + self.basename)
         actual = self.component
         actual['revision'] = self.get_actual_revision(actual['revision'])
-        print yaml.dump(actual)
+        print(yaml.dump(actual, default_flow_style=True))
 
     def list(self, args = []):
         if self.config.verbose:
-            print "List " + self.basename
+            print("List " + self.basename)
         if self.component['alias'] != None:
             alias_str = "," + self.component['alias']
         else:
             alias_str = ""
-        print self.name_ + "," + self.component['label'] + "@" + self.component['revision'] +  "," + self.component['repos'] + alias_str
+        print(self.name_ + "," + self.component['label'] + "@" + self.component['revision'] +  "," + self.component['repos'] + alias_str)
 
 
 class HgManagerCmdLine:
@@ -174,7 +176,7 @@ class HgManagerCmdLine:
         self._exec_cmd(args[1], args[2:])
 
     def _serialize_manager(self, manager, ostream = sys.stdout):
-        print >> ostream, yaml.dump(manager)
+        print(yaml.dump(manager, default_flow_style=True), file=ostream)
 
     def _deserialize_manager(self, istream = sys.stdin):
         return yaml.load(istream)
@@ -216,11 +218,11 @@ class HgManagerCmdLine:
             elif cmd_name == "list":
                 self._manager.list(args)
             else:
-                print "unexpected command: ignored: " + " ".join(args)
+                print("unexpected command: ignored: " + " ".join(args))
         self._store_session()
 
 if __name__ == "__main__":
     HgManagerCmdLine(sys.argv[1:])
 else:
     if verbose == 1:
-        print "Loading " + __name__         
+        print("Loading " + __name__)

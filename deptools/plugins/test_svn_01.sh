@@ -35,6 +35,13 @@ error() {
     exit 1
 }
 
+do_test() {
+    echo "## ------------------------------------------------------------"
+    echo "## $*"
+    echo "## ------------------------------------------------------------"
+    $TEST $*
+}
+
 dir=`dirname $0`
 dir=`cd $dir; pwd`
 TEST="env PYTHONPATH=$dir/.. python $dir/svn.py"
@@ -83,16 +90,16 @@ component:
 EOF
 
 # A deptools session
-$TEST ${tmpbase}.1.ser new ${tmpbase}.1.dep
-$TEST ${tmpbase}.1.ser extract 
-$TEST ${tmpbase}.1.ser dump
-$TEST ${tmpbase}.1.ser dump_actual
-$TEST ${tmpbase}.1.ser dump_head
-$TEST ${tmpbase}.1.ser update
-$TEST ${tmpbase}.1.ser execute touch bfile
-$TEST ${tmpbase}.1.ser execute svn add bfile
-$TEST ${tmpbase}.1.ser commit -m 'Added empty bfile'
-$TEST ${tmpbase}.1.ser execute touch cfile
+do_test ${tmpbase}.1.ser new ${tmpbase}.1.dep
+do_test ${tmpbase}.1.ser extract
+do_test ${tmpbase}.1.ser dump
+do_test ${tmpbase}.1.ser dump_actual
+do_test ${tmpbase}.1.ser dump_head
+do_test ${tmpbase}.1.ser update
+do_test ${tmpbase}.1.ser execute touch bfile
+do_test ${tmpbase}.1.ser execute svn add bfile
+do_test ${tmpbase}.1.ser commit -m 'Added_empty_bfile'
+do_test ${tmpbase}.1.ser execute touch cfile
 
 # Add a new file in the work repository
 cd ${tmpbase}.1.work/trunk
@@ -103,9 +110,9 @@ svn commit -m 'Added dfile'
 cd ../..
 
 # A second deptools session
-$TEST ${tmpbase}.1.ser update
-$TEST ${tmpbase}.1.ser execute svn add cfile
-$TEST ${tmpbase}.1.ser commit -m 'Added empty cfile'
+do_test ${tmpbase}.1.ser update
+do_test ${tmpbase}.1.ser execute svn add cfile
+do_test ${tmpbase}.1.ser commit -m 'Added_empty_cfile'
 
 # Now checks that the repository is ok
 svn co file://$cwd/${tmpbase}.1/trunk ${tmpbase}.final

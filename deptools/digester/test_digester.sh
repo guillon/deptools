@@ -27,32 +27,29 @@
 #
 
 set -e
-dir=`dirname $0`
 
 [ "$DEBUG" = "" ] || set -x
 
-failed=0
-
-exit_func() {
-    echo
-    [ $failed = 1 ] || echo "PASSED: all tests passed"
-    [ $failed = 0 ] || echo "FAILED: some tests failed"
+error() {
+    echo "error: $*"
+    exit 1
 }
 
-failed() {
-  echo "TEST-UNEXPECTED-FAIL | $*" >&2
-  failed=1
+do_test() {
+    echo "## ------------------------------------------------------------"
+    echo "## $TEST $*"
+    echo "## ------------------------------------------------------------"
+    $TEST $*
 }
 
-success() {
-  echo "TEST-PASS | $*" >&2
-}
+dir=`dirname $0`
+dir=`cd $dir; pwd`
+cd $dir
+echo "in shell path " $PWD
+TEST="env PYTHONPATH=$dir/.. python $dir/test_digester.py"
 
-trap "exit_func" 0 1 15
+# Launch the test
+do_test
 
-for i in $dir/test_*.sh $dir/plugins/test_*.sh $dir/digester/test_*.sh
-do
-    echo "Running $i"
-    ($i && success $i) || failed $i
-done
-
+# Notify success
+echo SUCCESS

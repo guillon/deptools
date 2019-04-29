@@ -27,7 +27,7 @@
 #
 
 import os, sys
-import argparse, copy
+import argparse, copy, subprocess
 
 # non standard package, use local version
 import yaml
@@ -37,7 +37,7 @@ from core import UserException
 from plugins import SourceManager
 from plugins import PluginLoader
 
-version = "0.3.0"
+_VERSION_ = "0.3.0"
 
 class DefaultConfig:
     def __init__(self):
@@ -194,6 +194,27 @@ class Dependency:
         else:
             raise UserException("unexpected command: %s" % command)
 
+def git_revision():
+    path = os.path.dirname(__file__)
+    command = ['git', 'describe',  '--always', '--tags', '--dirty']
+    output = ""
+    try:
+        p = subprocess.Popen(command, cwd=path,
+                             stdout=subprocess.PIPE,
+                             stderr=subprocess.PIPE)
+        output = p.communicate()[0].strip()
+    except OSError, e:
+        pass
+    return output
+
+def version_string():
+    basename = os.path.basename(sys.argv[0])
+    version = "%s version %s" % (basename, _VERSION_)
+    git_rev = git_revision()
+    if git_rev:
+        version += " [git:%s]" % git_rev
+    return version
+
 def print_error(msg):
   print >>sys.stderr, "%s: error: %s" % (os.path.basename(sys.argv[0]), msg)
 
@@ -242,7 +263,7 @@ def main():
         usage(def_config)
         sys.exit(0)
     if opts.version:
-        print "%s version %s" % (os.path.basename(sys.argv[0]), version)
+        print "%s" % version_string()
         sys.exit(0)
     config.handle_options(opts, args)
 
